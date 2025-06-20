@@ -40,24 +40,98 @@
 ##############################################################################
 
 
+# -----------------------------------------------------------------------------
+# AUTO-INSTALL AND LOAD REQUIRED PACKAGES FOR MULTI-LABEL SCRIPT (v2025)
+# -----------------------------------------------------------------------------
 
-###############################################################################
-# SET WORKSAPCE                                                               #
-###############################################################################
-FolderRoot = "~/Local-Partitions"
-FolderScripts = "~/Local-Partitions/R"
+# Load required library
+if (!require("here", quietly = TRUE)) install.packages("here", dependencies = TRUE)
+library(here)
 
-library("foreign", quietly = TRUE) 
-library("stringr", quietly = TRUE) 
-library("parallel", quietly = TRUE) 
-library("rJava", quietly = TRUE) 
-library("RWeka", quietly = TRUE) 
-library("utiml", quietly = TRUE)
-library("mldr", quietly = TRUE) 
-library("foreach", quietly = TRUE) 
-library("doParallel", quietly = TRUE) 
-library("tidyverse", quietly = TRUE) 
-library("magrittr", quietly = TRUE) 
+# Define root folder (optional, from original script)
+FolderRoot <- here::here()
+FolderScripts <- here::here("R")
+
+# -----------------------------------------------------------------------------
+# List of required packages
+# -----------------------------------------------------------------------------
+
+cran_packages <- c(
+  "foreign", "stringr", "parallel", "rJava", "RWeka", "utiml",
+  "mldr", "foreach", "doParallel", "tidyverse", "magrittr","Matrix"
+)
+
+base_packages <- c("parallel")
+
+# If any GitHub packages are needed later, define them here
+github_packages <- list(
+  # Example: "somepkg" = "user/repo"
+)
+
+# -----------------------------------------------------------------------------
+# Install CRAN package if missing
+# -----------------------------------------------------------------------------
+install_cran_package <- function(pkg) {
+  if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+    message(paste("Installing CRAN package:", pkg))
+    tryCatch({
+      install.packages(pkg, dependencies = TRUE)
+      library(pkg, character.only = TRUE, quietly = TRUE)
+      message(paste("✅ Package", pkg, "successfully installed."))
+    }, error = function(e) {
+      message(paste("❌ Error installing package", pkg, ":", e$message))
+    })
+  } else {
+    message(paste("✅ Package", pkg, "is already installed."))
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Install GitHub package if missing
+# -----------------------------------------------------------------------------
+install_github_package <- function(pkg, repo) {
+  if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
+    if (!require("devtools", character.only = TRUE, quietly = TRUE)) {
+      install.packages("devtools")
+      library(devtools, quietly = TRUE)
+    }
+    message(paste("Installing GitHub package:", pkg))
+    tryCatch({
+      devtools::install_github(repo)
+      library(pkg, character.only = TRUE, quietly = TRUE)
+      message(paste("✅ Package", pkg, "successfully installed from GitHub."))
+    }, error = function(e) {
+      message(paste("❌ Error installing GitHub package", pkg, ":", e$message))
+    })
+  } else {
+    message(paste("✅ Package", pkg, "is already installed."))
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Load base packages (no install needed)
+# -----------------------------------------------------------------------------
+for (pkg in base_packages) {
+  library(pkg, character.only = TRUE, quietly = TRUE)
+  message(paste("✅ Base package", pkg, "loaded."))
+}
+
+# -----------------------------------------------------------------------------
+# Install and load CRAN packages
+# -----------------------------------------------------------------------------
+for (pkg in cran_packages) {
+  install_cran_package(pkg)
+}
+
+# -----------------------------------------------------------------------------
+# Install and load GitHub packages (if any)
+# -----------------------------------------------------------------------------
+for (pkg in names(github_packages)) {
+  install_github_package(pkg, github_packages[[pkg]])
+}
+
+message("🎉 All packages have been successfully verified and loaded!")
+
 
 
 ##################################################################################################

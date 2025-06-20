@@ -50,19 +50,11 @@ rm(list=ls())
 cat("\n################################")
 cat("\n# Set Work Space               #")
 cat("\n###############################\n\n")
-FolderRoot = "~/Local-Partitions"
-FolderScripts = "~/Local-Partitions/R"
-
-
-cat("\n########################################")
-cat("\n# Loading R Sources                    #")
-cat("\n########################################\n\n")
-
-setwd(FolderScripts)
-source("libraries.R")
-
-setwd(FolderScripts)
-source("utils.R")
+library(here)
+library(stringr)
+FolderRoot <- here::here()
+FolderScripts <- here::here("R")
+setwd(FolderRoot)
 
 
 cat("\n########################################")
@@ -82,8 +74,8 @@ parameters = list()
 cat("\n########################################")
 cat("\n# Reading Datasets-Original.csv        #")
 cat("\n########################################\n\n")
-setwd(FolderRoot)
-datasets <- data.frame(read.csv("datasets-original.csv"))
+name = paste0(FolderRoot, "/datasets-original.csv")
+datasets <- data.frame(read.csv(name))
 parameters$Datasets.List = datasets
 
 
@@ -94,10 +86,10 @@ args <- commandArgs(TRUE)
 
 config_file <- args[1]
 
-# config_file = "~/Local-Partitions/config-files/lr-emotions.csv"
+# config_file = "/home/cissagatto/LocalPartitions/config-files/lr-emotions.csv"
 
 
-parameters$Config.File.Name = config_file
+parameters$Config.File$Name = config_file
 if(file.exists(config_file)==FALSE){
   cat("\n################################################################")
   cat("#\n Missing Config File! Verify the following path:              #")
@@ -117,45 +109,42 @@ config = data.frame(read.csv(config_file))
 print(config)
 cat("\n########################################\n\n")
 
+
+
 cat("\n########################################")
 cat("\n# Getting Parameters                   #\n")
 cat("\n########################################")
-dataset_path = toString(config$Value[1])
+FolderScripts = toString(config$Value[1])
+FolderScripts = str_remove(FolderScripts, pattern = " ")
+parameters$Config.File$FolderScripts = FolderScripts
+
+dataset_path = toString(config$Value[2])
 dataset_path = str_remove(dataset_path, pattern = " ")
 parameters$Config.File$Dataset.Path = dataset_path
 
-folderResults = toString(config$Value[2]) 
+folderResults = toString(config$Value[3]) 
 folderResults = str_remove(folderResults, pattern = " ")
 parameters$Config.File$Folder.Results = folderResults
 
-implementation = toString(config$Value[3])
+implementation = toString(config$Value[4])
 implementation = str_remove(implementation, pattern = " ")
 parameters$Config.File$Implementation = implementation
 
-dataset_name = toString(config$Value[4])
+dataset_name = toString(config$Value[5])
 dataset_name = str_remove(dataset_name, pattern = " ")
 parameters$Config.File$Dataset.Name = dataset_name
 
-number_dataset = as.numeric(config$Value[5])
+number_dataset = as.numeric(config$Value[6])
 parameters$Config.File$Number.Dataset = number_dataset
 
-number_folds = as.numeric(config$Value[6])
+number_folds = as.numeric(config$Value[7])
 parameters$Config.File$Number.Folds = number_folds
 
-number_cores = as.numeric(config$Value[7])
+number_cores = as.numeric(config$Value[8])
 parameters$Config.File$Number.Cores = number_cores
-
-# cat("\n################################################################\n")
-# print(parameters$Config.File)
-# cat("\n################################################################\n\n")
-
 
 ds = datasets[number_dataset,]
 parameters$Dataset.Info = ds
-
-# cat("\n################################################################\n")
-# print(ds)
-# cat("\n################################################################\n\n")
 
 
 cat("\n########################################")
@@ -164,22 +153,28 @@ cat("\n########################################\n\n")
 if (dir.exists(folderResults) == FALSE) {dir.create(folderResults)}
 
 
+
+cat("\n########################################")
+cat("\n# Loading R Sources                    #")
+cat("\n########################################\n\n")
+source(file.path(FolderScripts, "libraries.R"))
+source(file.path(FolderScripts, "utils.R"))
+
+
 cat("\n###############################\n")
 cat("\n# Get directories             #")
 cat("\n###############################\n\n")
 diretorios <- directories(parameters)
 parameters$Directories = diretorios
 
-# cat("\n################################################################\n")
-# print(parameters$Directories)
-# cat("\n################################################################\n\n")
-
 
 
 cat("\n####################################################################")
 cat("\n# Checking the dataset tar.gz file                                 #")
 cat("\n####################################################################\n\n")
-str00 = paste(dataset_path, "/", parameters$Config.File$Dataset.Name,".tar.gz", sep = "")
+str00 = paste(parameters$Config.File$Dataset.Path, 
+              "/", parameters$Config.File$Dataset.Name,
+              ".tar.gz", sep = "")
 str00 = str_remove(str00, pattern = " ")
 
 if(file.exists(str00)==FALSE){
@@ -233,9 +228,7 @@ if(file.exists(str00)==FALSE){
 ##############################################################################
 if(implementation=="rf"){
   
-  
-  setwd(FolderScripts)
-  source("run-rf.R")
+  source(file.path(FolderScripts, "run-rf.R"))
   
   cat("\n\n############################################################")
   cat("\n# RSCRIPT Local RANDOM FORESTS START                     #")
@@ -276,7 +269,7 @@ if(implementation=="rf"){
   cat("\n# ====> LPC: COPY TO HOME                                     #")
   cat("\n#####################################################################\n\n")
   
-  str_02 = "~/Local-Partitions/Reports/"
+  str_02 = parameters$Directories$folderReports
   if(dir.exists(str_02)==FALSE){dir.create(str_02)}
   
   str_03 = paste(parameters$Directories$FolderLocal, "/",

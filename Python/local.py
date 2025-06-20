@@ -39,19 +39,33 @@
 #                                                                            #
 ##############################################################################
 
-
-
-
 import sys
+import platform
 import os
+import io
+
+import joblib
+
+FolderRoot = os.path.expanduser('~/LocalPartitions/Python')
+os.chdir(FolderRoot)
+current_directory = os.getcwd()
+sys.path.append('..')
+
 import pickle
+import time
+import importlib
+
 from joblib import dump
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier  
-from sklearn.metrics import average_precision_score
+
 from skmultilearn.problem_transform import BinaryRelevance
-from sklearn.metrics import average_precision_score
+from sklearn.ensemble import RandomForestClassifier  
+
+import evaluation as eval
+importlib.reload(eval)
+import measures as ms
+importlib.reload(ms)
 
 if __name__ == '__main__':
     
@@ -64,6 +78,22 @@ if __name__ == '__main__':
     
     # juntando treino com validação
     train = pd.concat([train,valid],axis=0).reset_index(drop=True)
+
+    # train = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Tr/emotions-Split-Tr-1.csv")
+    # valid = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Vl/emotions-Split-Vl-1.csv")
+    # test = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Ts/emotions-Split-Ts-1.csv")
+    # start = 72
+    # end = 78
+    # diretorio = "/tmp/lr-emotions/Local/Split-1"
+    
+    print("\n\n%==============================================%")
+    print("train: ", sys.argv[1])
+    print("valid: ", sys.argv[2])
+    print("test: ", sys.argv[3])
+    print("start: ", sys.argv[4])
+    print("directory: ", sys.argv[5])
+    print("fold: ", sys.argv[6])
+    print("%==============================================%\n\n")
     
     # treino: separando os atributos e os rótulos
     X_train = train.iloc[:, :start]    # atributos 
@@ -82,15 +112,25 @@ if __name__ == '__main__':
     attr_x_test = list(X_test.columns)
     
     # parametros do classificador base
-    random_state = 0    
+    random_state = 1234    
     n_estimators = 200
     baseModel = RandomForestClassifier(n_estimators = n_estimators, random_state = random_state)
     classifier = BinaryRelevance(baseModel)
-    classifier.fit(X_train, Y_train)
-    binary_predictions = classifier.predict(X_test.values)
-    probabilities = classifier.predict_proba(X_test.values)
     
-    # preds = clf.predict(X.values) 
+    start_train_time = time.time()
+    classifier.fit(X_train, Y_train)
+    end_train_time = time.time()
+    training_time = end_train_time - start_train_time  
+    
+    start_test_time = time.time()
+    binary_predictions = classifier.predict(X_test.values)
+    end_test_time = time.time()
+    testing_time_bin = end_test_time - start_test_time
+    
+    start_test_time = time.time()
+    probabilities = classifier.predict_proba(X_test.values)
+    end_test_time = time.time()
+    testing_time_proba = end_test_time - start_test_time
     
     true = (diretorio + "/y_true.csv")
     pred = (diretorio + "/y_pred_bin.csv")
@@ -108,42 +148,44 @@ if __name__ == '__main__':
     probabilities_2.columns = labels_y_test
     probabilities_2.to_csv(proba, index=False)
     
-      
-    # List to store model size information
-    model_sizes = []
+    # print("\nCOMPUTE CURVES")
+    res_curves = eval.multilabel_curves_measures(Y_test, probabilities_2)    
+    name = (diretorio + "/results-python.csv") 
+    res_curves.to_csv(name, index=False)
     
-    # Save the model using pickle
-    model_path = (diretorio + "/model_rf.pkl")
-    with open(model_path, "wb") as f:
-        pickle.dump(classifier, f)
+    # Prepare dataframe
+    timing_data = [
+        ["training_time", training_time],
+        ["testing_time_bin", testing_time_bin],
+        ["testing_time_proba", testing_time_proba]
+    ]
+
+    df_timing = pd.DataFrame(timing_data, columns=["Process", "Time (s)"])
+
+    # Save to CSV
+    name_csv = os.path.join(diretorio, "runtime-python.csv")
+    df_timing.to_csv(name_csv, index=False)   
+
+    # Measure pickle size in memory
+    buffer_pickle = io.BytesIO()
+    pickle.dump(classifier, buffer_pickle)
+    size_pickle_bytes = buffer_pickle.tell()
+
+    # Measure joblib size in memory
+    buffer_joblib = io.BytesIO()
+    joblib.dump(classifier, buffer_joblib)
+    size_joblib_bytes = buffer_joblib.tell()
+
+    # Prepare dataframe with only bytes
+    model_sizes = [
+        ["pickle", size_pickle_bytes],
+        ["joblib", size_joblib_bytes]
+    ]
+
+    df_sizes = pd.DataFrame(model_sizes, columns=["Format", "Size (Bytes)"])
+
+    # Save to CSV
+    name_csv = os.path.join(diretorio, "model-sizes.csv")
+    df_sizes.to_csv(name_csv, index=False)
+
     
-    # Get the file size
-    file_size_bytes = os.path.getsize(model_path)  # in bytes
-    file_size_kb = file_size_bytes / 1024  # convert to KB
-    file_size_mb = file_size_kb / 1024  # convert to MB
-    
-    # Store in the list
-    model_sizes.append(["pickle", file_size_bytes, file_size_kb, file_size_mb])
-    
-    print(f"Pickle model size: {file_size_mb:.2f} MB")
-    
-    # Save the model using joblib
-    model_path = (diretorio + "/model_rf.joblib")
-    dump(classifier, model_path)
-    
-    # Get the file size
-    file_size_bytes = os.path.getsize(model_path)  # in bytes
-    file_size_kb = file_size_bytes / 1024  # convert to KB
-    file_size_mb = file_size_kb / 1024  # convert to MB
-    
-    # Store in the list
-    model_sizes.append(["joblib", file_size_bytes, file_size_kb, file_size_mb])
-    
-    print(f"Joblib model size: {file_size_mb:.2f} MB")
-    
-    # Create a DataFrame and save to a single CSV
-    name_csv = (diretorio + "/model_sizes.csv")
-    df_size = pd.DataFrame(model_sizes, columns=["Format", "Size (Bytes)", "Size (KB)", "Size (MB)"])
-    df_size.to_csv(name_csv, index=False)
-    
-    print("Model sizes saved to 'model_sizes.csv'")

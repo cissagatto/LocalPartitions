@@ -41,24 +41,12 @@
 
 
 
-
-###############################################################################
-# SET WORKSAPCE                                                               #
-###############################################################################
-FolderRoot = "~/Local-Partitions"
-FolderScripts = "~/Local-Partitions/R"
-
-
 ###########################################################################
 #
 ###########################################################################
 run.rf <- function(parameters){
   
-  FolderRoot = "~/Local-Partitions"
-  FolderScripts = "~/Local-Partitions/R"
-  
-  setwd(FolderScripts)
-  source("local-rf.R")
+  source(file.path(parameters$Config.File$FolderScripts, "local-rf.R"))
   
   if(parameters$Config.File$Number.Cores == 0){
     
@@ -84,9 +72,6 @@ run.rf <- function(parameters){
     }
   }
   
-  
-  cl = cl
-  
   retorno = list()
   
   
@@ -111,7 +96,7 @@ run.rf <- function(parameters){
   cat("\n\n############################################")
   cat("\n# RUN: label dependency                      #")
   cat("\n##############################################\n\n")
-  time.dependency = system.time(compute.label.dependecy(parameters))
+  time.dependency = system.time(resLD <- compute.label.dependecy(parameters))
   
   
   cat("\n\n####################################################")
@@ -129,7 +114,7 @@ run.rf <- function(parameters){
   cat("\n\n##########################################################")
     cat("\n# RUN: Gather Evaluated Measures                         #")
     cat("\n##########################################################\n\n")
-  time.gather.evaluate = system.time(gather.eval.local.python(parameters))
+  time.gather.evaluate = system.time(gather.eval.python.silho(parameters))
   
   
   cat("\n\n###########################################################")

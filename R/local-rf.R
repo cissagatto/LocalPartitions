@@ -341,7 +341,7 @@ gather.eval.python.silho <- function(parameters){
   setwd(parameters$Directories$FolderLocal)
   final.results <- final.results[, !duplicated(colnames(final.results))]
   final.results = final.results[,-1]
-  write.csv(final.results, "performance.csv", row.names = FALSE)
+  write.csv(final.results, "performance.csv")
   
   write.csv(total.model.size, "model-size.csv", row.names = FALSE)
   write.csv(final.runtime.r, "runtime-r.csv", row.names = FALSE)

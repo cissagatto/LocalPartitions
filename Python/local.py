@@ -79,20 +79,20 @@ if __name__ == '__main__':
     # juntando treino com validação
     train = pd.concat([train,valid],axis=0).reset_index(drop=True)
 
-    # train = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Tr/emotions-Split-Tr-1.csv")
-    # valid = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Vl/emotions-Split-Vl-1.csv")
-    # test = pd.read_csv("/tmp/lr-emotions/Dataset/emotions/CrossValidation/Ts/emotions-Split-Ts-1.csv")
-    # start = 72
-    # end = 78
-    # diretorio = "/tmp/lr-emotions/Local/Split-1"
+    #train = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Tr/cal500-Split-Tr-1.csv")
+    #valid = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Vl/cal500-Split-Vl-1.csv")
+    #test = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Ts/cal500-Split-Ts-1.csv")
+    #start = 68
+    #end = 242
+    #diretorio = "/home/cissagatto/LocalPartitions"
     
     print("\n\n%==============================================%")
     print("train: ", sys.argv[1])
     print("valid: ", sys.argv[2])
     print("test: ", sys.argv[3])
     print("start: ", sys.argv[4])
-    print("directory: ", sys.argv[5])
-    print("fold: ", sys.argv[6])
+    print("end: ", sys.argv[5])
+    print("directory: ", sys.argv[6])
     print("%==============================================%\n\n")
     
     # treino: separando os atributos e os rótulos
@@ -104,7 +104,7 @@ if __name__ == '__main__':
     Y_test = test.iloc[:, start:]    # rótulos 
     
     # obtendo os nomes dos rótulos
-    labels_y_train = list(Y_train.columns)
+    labels_y_train = list(Y_train.columns)    
     labels_y_test = list(Y_test.columns)
     
     # obtendo os nomes dos atributos
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     probabilities_2.to_csv(proba, index=False)
     
     # print("\nCOMPUTE CURVES")
-    res_curves = eval.multilabel_curves_measures(Y_test, probabilities_2)    
+    res_curves = eval.multilabel_curve_metrics(Y_test, probabilities_2)    
     name = (diretorio + "/results-python.csv") 
     res_curves.to_csv(name, index=False)
     

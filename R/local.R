@@ -86,7 +86,7 @@ args <- commandArgs(TRUE)
 
 config_file <- args[1]
 
-# config_file = "/home/cissagatto/LocalPartitions/config-files/lr-emotions.csv"
+# config_file = "/home/cissagatto/LocalPartitions/config-files/l-emotions.csv"
 
 
 parameters$Config.File$Name = config_file
@@ -362,19 +362,31 @@ if(implementation=="rf"){
                  parameters$Directories$FolderLocal, " .", sep="")
   print(system(str_01))
   
+  tar_file <- paste0(parameters$Directories$FolderResults, "/", 
+                     parameters$Dataset.Info$Name,
+                     "-results-local.tar.gz")
+  
+  str_01 <- paste(
+    "tar -zcvf", tar_file,
+    "-C", parameters$Directories$FolderLocal, "."
+  )
+  cat("\nComando:\n", str_01, "\n")
+  system(str_01)
+  
   
   cat("\n\n###################################################################")
   cat("\n# ====> GPC: COPY TO HOME                                     #")
   cat("\n#####################################################################\n\n")
+  str_0 = parameters$Directories$folderReports
+  if(dir.exists(str_0)==FALSE){dir.create(str0)}
   
-  str_02 = "~/Local-Partitions/Reports/"
-  if(dir.exists(str0)==FALSE){dir.create(str0)}
+  str_03 = paste(parameters$Directories$FolderResults, "/",
+                 parameters$Dataset.Info$Name,
+                 "-results-local.tar.gz", sep="")
   
-  str_03 = paste(parameters$Directories$FolderLocal, "/",
-                 dataset_name, "-results-local.tar.gz", sep="")
+  str_04 = paste("cp ", str_03, " ", str_0, sep="")
+  print(system(str_04))
   
-  str_04 = paste("cp ", str_03, " ", str_02, sep="")
-  print(system(str4))
   
   
   

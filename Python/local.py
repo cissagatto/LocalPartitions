@@ -39,6 +39,7 @@
 #                                                                            #
 ##############################################################################
 
+
 import sys
 import platform
 import os
@@ -46,10 +47,10 @@ import io
 
 import joblib
 
-FolderRoot = os.path.expanduser('~/LocalPartitions/Python')
-os.chdir(FolderRoot)
-current_directory = os.getcwd()
-sys.path.append('..')
+#FolderRoot = os.path.expanduser('~/LocalPartitions/Python')
+#os.chdir(FolderRoot)
+#current_directory = os.getcwd()
+#sys.path.append('..')
 
 import pickle
 import time
@@ -84,14 +85,14 @@ if __name__ == '__main__':
     #test = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Ts/cal500-Split-Ts-1.csv")
     #start = 68
     #end = 242
-    #diretorio = "/home/cissagatto/LocalPartitions"
+    # diretorio = "/tmp/lr-GpositiveGO/Local/Split-1"
     
     print("\n\n%==============================================%")
-    print("train: ", sys.argv[1])
-    print("valid: ", sys.argv[2])
-    print("test: ", sys.argv[3])
-    print("start: ", sys.argv[4])
-    print("end: ", sys.argv[5])
+    #print("train: ", sys.argv[1])
+    #print("valid: ", sys.argv[2])
+    #print("test: ", sys.argv[3])
+    #print("start: ", sys.argv[4])
+    #print("end: ", sys.argv[5])
     print("directory: ", sys.argv[6])
     print("%==============================================%\n\n")
     
@@ -148,12 +149,7 @@ if __name__ == '__main__':
     probabilities_2.columns = labels_y_test
     probabilities_2.to_csv(proba, index=False)
     
-    # print("\nCOMPUTE CURVES")
-    res_curves = eval.multilabel_curve_metrics(Y_test, probabilities_2)    
-    name = (diretorio + "/results-python.csv") 
-    res_curves.to_csv(name, index=False)
-    
-    # Prepare dataframe
+    # =========== SAVE TIME ===========  
     timing_data = [
         ["training_time", training_time],
         ["testing_time_bin", testing_time_bin],
@@ -161,31 +157,23 @@ if __name__ == '__main__':
     ]
 
     df_timing = pd.DataFrame(timing_data, columns=["Process", "Time (s)"])
-
-    # Save to CSV
     name_csv = os.path.join(diretorio, "runtime-python.csv")
-    df_timing.to_csv(name_csv, index=False)   
-
-    # Measure pickle size in memory
-    buffer_pickle = io.BytesIO()
-    pickle.dump(classifier, buffer_pickle)
-    size_pickle_bytes = buffer_pickle.tell()
-
-    # Measure joblib size in memory
-    buffer_joblib = io.BytesIO()
-    joblib.dump(classifier, buffer_joblib)
-    size_joblib_bytes = buffer_joblib.tell()
-
-    # Prepare dataframe with only bytes
-    model_sizes = [
-        ["pickle", size_pickle_bytes],
-        ["joblib", size_joblib_bytes]
-    ]
-
-    df_sizes = pd.DataFrame(model_sizes, columns=["Format", "Size (Bytes)"])
-
-    # Save to CSV
-    name_csv = os.path.join(diretorio, "model-sizes.csv")
-    df_sizes.to_csv(name_csv, index=False)
-
+    df_timing.to_csv(name_csv, index=False)       
     
+
+    # =========== SAVE MEASURES ===========   
+    metrics_df, ignored_df = eval.multilabel_curve_metrics(Y_test, probabilities_2)    
+    name = (diretorio + "/results-python.csv") 
+    metrics_df.to_csv(name, index=False)  
+    name = (diretorio + "/ignored-classes.csv") 
+    ignored_df.to_csv(name, index=False)  
+     
+
+    # =========== SAVE MODEL SIZE EM BYTES ===========
+    model_buffer = io.BytesIO()
+    pickle.dump(classifier, model_buffer)
+    model_size_bytes = model_buffer.tell()
+    model_size_df = pd.DataFrame({
+        'model_size_bytes': [model_size_bytes]
+    })
+    model_size_df.to_csv(os.path.join(diretorio, "model-size.csv"), index=False)

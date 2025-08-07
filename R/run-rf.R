@@ -59,7 +59,7 @@ run.rf <- function(parameters){
     
     cl <- parallel::makeCluster(parameters$Config.File$Number.Cores)
     doParallel::registerDoParallel(cl)
-    print(cl)
+    #print(cl)
     
     if(parameters$Config.File$Number.Cores==1){
       cat("\n\n########################################################")
@@ -96,7 +96,7 @@ run.rf <- function(parameters){
   cat("\n\n############################################")
   cat("\n# RUN: label dependency                      #")
   cat("\n##############################################\n\n")
-  time.dependency = system.time(resLD <- compute.label.dependecy(parameters))
+  # time.dependency = system.time(resLD <- compute.label.dependecy(parameters))
   
   
   cat("\n\n####################################################")
@@ -120,7 +120,7 @@ run.rf <- function(parameters){
   cat("\n\n###########################################################")
     cat("\n# RUN: Save Runtime                                       #")
     cat("\n###########################################################\n\n")
-  RunTimeGlobal = rbind(time.dependency, time.execute, time.evaluate, 
+  RunTimeGlobal = rbind(time.execute, time.evaluate, 
                         time.gather.evaluate)
   setwd(parameters$Directories$FolderLocal)
   write.csv(RunTimeGlobal, "Run-RunTime.csv")

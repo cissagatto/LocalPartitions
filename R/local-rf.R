@@ -46,7 +46,7 @@
 ########################################################################
 execute.local.python <- function(parameters){
   
-  #f = 1
+  # f = 1
   rf.local.parallel <- foreach(f = 1:parameters$Config.File$Number.Folds) %dopar% {
   # while(f<=parameters$Config.File$Number.Folds){
     
@@ -110,7 +110,7 @@ execute.local.python <- function(parameters){
     
     # EXECUTA
     start <- proc.time()
-    res = print(system(str.execute))
+    res = system(str.execute)
     tempo = data.matrix((proc.time() - start))
     tempo = data.frame(t(tempo))
     write.csv(tempo, paste(FolderSplit, "/runtime-fold.csv", sep=""))
@@ -253,9 +253,9 @@ evaluate.local.python <- function(parameters){
                         parameters$Config.File$Dataset.Name, 
                         "-Split-Vl-", f, ".csv", sep="")
     
-    system(paste0("rm -r ", nome.tr.csv))
-    system(paste0("rm -r ", nome.ts.csv))
-    system(paste0("rm -r ", nome.vl.csv))
+    #system(paste0("rm -r ", nome.tr.csv))
+    #system(paste0("rm -r ", nome.ts.csv))
+    #system(paste0("rm -r ", nome.vl.csv))
     
     # f = f + 1
     gc()
@@ -306,9 +306,9 @@ gather.eval.python.silho <- function(parameters){
     
     #########################################################################
     res.model.size = data.frame(read.csv(paste(folderSplit, 
-                                               "/model-sizes.csv", sep="")))
-    names(res.model.size) = c("Format", "Bytes")
-    resultado = data.frame(fold = paste0("fold",f), res.model.size)
+                                               "/model-size.csv", sep="")))
+    names(res.model.size) = "Bytes"
+    resultado = data.frame(fold = f, res.model.size)
     total.model.size = rbind(total.model.size, resultado)
     
     #########################################################################
@@ -322,16 +322,21 @@ gather.eval.python.silho <- function(parameters){
     res.runtime.python = data.frame(read.csv(paste(folderSplit, 
                                                    "/runtime-python.csv", sep="")))
     names(res.runtime.python) = c("Process", "Time")
-    res.runtime.python = data.frame(fold = paste0("fold",f), res.runtime.python)
-    final.runtime.p = rbind(final.runtime.p, res.runtime.python)
+    tempo = data.frame(t(res.runtime.python))
+    colunas = tempo[1,]
+    colnames(tempo) = colunas
+    tempo = tempo[-1,]
+    tempo = data.frame(fold = f,tempo)
+    rownames(tempo) = NULL
+    final.runtime.p = rbind(final.runtime.p, tempo)
     
     #################################
     # /tmp/gr-emotions/Global/Split-1
-    print(system(paste0("rm -r ", folderSplit, "/results-python.csv", sep="")))
-    print(system(paste0("rm -r ", folderSplit, "/results-utiml.csv", sep="")))
-    print(system(paste0("rm -r ", folderSplit, "/model-sizes.csv", sep="")))
-    print(system(paste0("rm -r ", folderSplit, "/runtime-python.csv", sep="")))
-    print(system(paste0("rm -r ", folderSplit, "/runtime-fold.csv", sep="")))
+    system(paste0("rm -r ", folderSplit, "/results-python.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/results-utiml.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/model-size.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/runtime-python.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/runtime-fold.csv", sep=""))
     
     f = f + 1
     gc()
@@ -341,7 +346,7 @@ gather.eval.python.silho <- function(parameters){
   setwd(parameters$Directories$FolderLocal)
   final.results <- final.results[, !duplicated(colnames(final.results))]
   final.results = final.results[,-1]
-  write.csv(final.results, "performance.csv")
+  write.csv(final.results, "performance.csv", row.names = FALSE)
   
   write.csv(total.model.size, "model-size.csv", row.names = FALSE)
   write.csv(final.runtime.r, "runtime-r.csv", row.names = FALSE)

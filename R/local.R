@@ -86,7 +86,9 @@ args <- commandArgs(TRUE)
 
 config_file <- args[1]
 
-# config_file = "/home/cissagatto/LocalPartitions/config-files/l-emotions.csv"
+
+# config_file = "/home/cissagatto/LocalPartitions/config-files/lr-GpositiveGO-1.csv"
+
 
 
 parameters$Config.File$Name = config_file
@@ -332,7 +334,7 @@ if(implementation=="rf"){
   cat("\n# RSCRIPT DELETE                                   #")
   cat("\n####################################################\n\n")
   str5 = paste("rm -r ", parameters$Directories$FolderDataset, sep="")
-  print(system(str5))
+  system(str5)
   
    
   # cat("\n\n######################################################")
@@ -385,9 +387,7 @@ if(implementation=="rf"){
                  "-results-local.tar.gz", sep="")
   
   str_04 = paste("cp ", str_03, " ", str_0, sep="")
-  print(system(str_04))
-  
-  
+  system(str_04)
   
   
 } else if(implementation=="mulan"){
@@ -404,7 +404,7 @@ cat("\n# CLEAN                                               #")
 cat("\n#######################################################\n\n")
 cat("\nDelete folder \n")
 str5 = paste("rm -r ", folderResults, sep="")
-print(system(str5))
+system(str5)
 
 
 cat("\n\n################################################################")

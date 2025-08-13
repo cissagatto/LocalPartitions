@@ -129,7 +129,8 @@ if __name__ == '__main__':
     testing_time_bin = end_test_time - start_test_time
     
     start_test_time = time.time()
-    probabilities = classifier.predict_proba(X_test.values)
+    #probabilities = classifier.predict_proba(X_test.values)
+    probabilities = eval.safe_predict_proba(classifier, X_test, Y_train)
     end_test_time = time.time()
     testing_time_proba = end_test_time - start_test_time
     

@@ -30,6 +30,7 @@
 import sys
 import platform
 import os
+import importlib
 
 #FolderRoot = os.path.expanduser('/lapix/arquivos/elaine/GlobalPartitions/Python')
 #os.chdir(FolderRoot)
@@ -47,7 +48,10 @@ from sklearn.metrics import (
     label_ranking_loss)
 
 import confusion_matrix as cm
+importlib.reload(cm)
+
 import measures as ms
+importlib.reload(ms)
 
 from collections import Counter
 from sklearn.utils.multiclass import type_of_target
@@ -316,7 +320,7 @@ def multilabel_bipartition_measures(true_labels: pd.DataFrame, pred_labels: pd.D
 
     # Basic metrics
     accuracy_mlem = ms.mlem_accuracy(true_labels, pred_labels)
-    hamming_l = hamming_loss(np.array(true_labels), np.array(pred_labels))    
+    #hamming_l = hamming_loss(np.array(true_labels), np.array(pred_labels))    
     zol = zero_one_loss(np.array(true_labels), np.array(pred_labels))    
     sa = ms.mlem_subset_accuracy(true_labels, pred_labels)
 
@@ -357,12 +361,12 @@ def multilabel_bipartition_measures(true_labels: pd.DataFrame, pred_labels: pd.D
 
     # Store all metrics in a dictionary
     metrics_dict = {
-        'accuracy': accuracy_mlem,        
+        #'accuracy': accuracy_mlem,        
         'f1_macro': f1_macro,
         'f1_micro': f1_micro,
         'f1_weighted': f1_weighted,
         'f1_samples': f1_samples, 
-        'hamming_loss': hamming_l,              
+        #'hamming_loss': hamming_l,              
         'jaccard_macro': jaccard_macro,
         'jaccard_micro': jaccard_micro,
         'jaccard_weighted': jaccard_weighted,
@@ -379,7 +383,7 @@ def multilabel_bipartition_measures(true_labels: pd.DataFrame, pred_labels: pd.D
         #'precision_recall_fscore_support_micro': rpf_micro,
         #'precision_recall_fscore_support_weighted': rpf_weighted,
         #'precision_recall_fscore_support_samples': rpf_samples,
-        'zero_one_loss': zol     
+        #'zero_one_loss': zol     
     }
 
     # Convert dictionary to DataFrame
@@ -473,11 +477,11 @@ def multilabel_curves_measures(true_labels: pd.DataFrame, pred_scores: pd.DataFr
         'auprc_macro': average_precision_macro,
         'auprc_micro': average_precision_micro,
         'auprc_weighted': average_precision_weighted,
-        # 'auprc_samples': average_precision_samples,
+        'auprc_samples': average_precision_samples,
         'roc_auc_macro': roc_auc_macro,
         'roc_auc_micro': roc_auc_micro,
         'roc_auc_weighted': roc_auc_weighted,
-        # 'roc_auc_samples': roc_auc_samples
+        'roc_auc_samples': roc_auc_samples
     }
 
     # Convert dictionary to DataFrame
@@ -939,47 +943,244 @@ def multilabel_curve_metrics(true_labels: pd.DataFrame, predicted_scores: pd.Dat
     return metrics_df, ignored_df
 
 
-import numpy as np
-import pandas as pd
-
 def safe_predict_proba(model, X_test, Y_train):
     """
-    Safely computes class probabilities for each label in a multi-label classification setting,
-    handling cases where some labels have only one class in the training data.
+    Computa de forma segura as probabilidades de classe 1 para cada label
+    em problemas de classificação multilabel, lidando com labels que possuem
+    apenas uma classe no conjunto de treino e evitando warnings de feature names.
 
-    Parameters
+    Objetivo
+    --------
+    Permitir o uso de `predict_proba` em modelos multilabel (como BinaryRelevance)
+    mesmo quando algumas labels no treino são monoclasses, evitando IndexErrors
+    ou warnings de compatibilidade de features.
+
+    Parâmetros
     ----------
-    model : BinaryRelevance or similar multi-label classifier
-        A fitted model trained on multi-label data. Must implement predict_proba per label.
-
-    X_test : pandas.DataFrame
-        The test set features.
-
+    model : sklearn-multilearn BinaryRelevance ou similar
+        Modelo já treinado que suporta `predict_proba` por label.
+    
+    X_test : pandas.DataFrame ou numpy.ndarray
+        Features do conjunto de teste.
+    
     Y_train : pandas.DataFrame
-        The multi-label target used during training. Needed for label names and column order.
+        Labels originais do treino (para referência de colunas e ordem).
 
-    Returns
+    Retorno
     -------
     prob_df : pandas.DataFrame
-        A DataFrame of shape (n_samples, n_labels), with probability of class 1 per label.
+        DataFrame de tamanho (n_samples, n_labels), com a probabilidade de classe 1
+        para cada label, na mesma ordem que `Y_train.columns`.
+
+    Exemplo de uso
+    ---------------
+    >>> from skmultilearn.problem_transform import BinaryRelevance
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> classifier = BinaryRelevance(classifier=RandomForestClassifier())
+    >>> classifier.fit(X_train, Y_train)
+    >>> probabilities = safe_predict_proba(classifier, X_test, Y_train)
+    >>> probabilities.shape
+    (n_test_samples, n_labels)
     """
+    
+
+    # Converte X_test para numpy array para evitar warnings
+    if hasattr(X_test, "values"):
+        X_test_array = X_test.values
+    else:
+        X_test_array = X_test
+
+    n_samples = X_test_array.shape[0]
     n_labels = Y_train.shape[1]
-    n_samples = X_test.shape[0]
+
     probas = np.zeros((n_samples, n_labels))
 
-    # predict_proba returns a list of arrays (one per label)
+    # prob_list é uma lista de arrays (uma por label)
     prob_list = model.predict_proba(X_test)
 
-    for i, probs in enumerate(prob_list):
-        if probs.shape[1] == 2:
-            # Caso binário normal: colunas [probabilidade de 0, probabilidade de 1]
-            probas[:, i] = probs[:, 1]
-        else:
-            # Caso onde só uma classe foi vista durante o treino (0 ou 1)
-            print(f"Label {i}: Not normal case (only one class in training)")
-
-            # Recupera a classe presente no classificador individual
+    for i in range(n_labels):
+        try:
+            probs = prob_list[i]
+            if probs.shape[1] == 2:
+                # Caso binário normal: colunas [prob_0, prob_1]
+                probas[:, i] = probs[:, 1]
+            else:
+                # Apenas uma classe foi vista durante o treino
+                single_class = model.classifiers_[i].classes_[0]
+                probas[:, i] = 1.0 if single_class == 1 else 0.0
+        except IndexError:
+            # Caso o model não retorne probabilidade para este label
             single_class = model.classifiers_[i].classes_[0]
             probas[:, i] = 1.0 if single_class == 1 else 0.0
 
     return pd.DataFrame(probas, columns=Y_train.columns)
+
+
+
+
+# def safe_predict_proba(model, X_test, Y_train):
+#     """
+#     Safely computes class probabilities for each label in a multi-label classification setting,
+#     handling cases where some labels have only one class in the training data.
+
+#     Parameters
+#     ----------
+#     model : BinaryRelevance or similar multi-label classifier
+#         A fitted model trained on multi-label data. Must implement predict_proba per label.
+
+#     X_test : pandas.DataFrame
+#         The test set features.
+
+#     Y_train : pandas.DataFrame
+#         The multi-label target used during training. Needed for label names and column order.
+
+#     Returns
+#     -------
+#     prob_df : pandas.DataFrame
+#         A DataFrame of shape (n_samples, n_labels), with probability of class 1 per label.
+#     """
+#     n_labels = Y_train.shape[1]
+#     n_samples = X_test.shape[0]
+#     probas = np.zeros((n_samples, n_labels))
+
+#     # predict_proba returns a list of arrays (one per label)
+#     prob_list = model.predict_proba(X_test)
+
+#     for i, probs in enumerate(prob_list):
+#         if probs.shape[1] == 2:
+#             # Caso binário normal: colunas [probabilidade de 0, probabilidade de 1]
+#             probas[:, i] = probs[:, 1]
+#         else:
+#             # Caso onde só uma classe foi vista durante o treino (0 ou 1)
+#             print(f"Label {i}: Not normal case (only one class in training)")
+
+#             # Recupera a classe presente no classificador individual
+#             single_class = model.classifiers_[i].classes_[0]
+#             probas[:, i] = 1.0 if single_class == 1 else 0.0
+
+#     return pd.DataFrame(probas, columns=Y_train.columns)
+
+
+
+# def safe_predict_proba(model, X_test, Y_train):
+#     """
+#     Calcula, de forma segura, as probabilidades da classe positiva (1) para
+#     cada rótulo em um problema de classificação multi-rótulo.
+# 
+#     A função é tolerante a dois cenários comuns que causam erro:
+#     (i) o classificador interno de alguma label foi treinado com apenas uma
+#         classe (todas as amostras 0 ou todas 1), caso em que `predict_proba`
+#         pode retornar apenas 1 coluna;
+#     (ii) a implementação retorna matrizes esparsas (scipy.sparse), que podem
+#          disparar IndexError ao tentar indexar uma segunda coluna inexistente.
+# 
+#     Para esses casos, a função converte saídas esparsas para densas, verifica o
+#     número de colunas e, quando só há uma classe vista no treino, preenche a
+#     probabilidade com 1.0 (se a classe aprendida for 1) ou 0.0 (se for 0).
+# 
+#     Parameters
+#     ----------
+#     model : object
+#         Classificador multi-rótulo já ajustado (ex.: skmultilearn.problem_transform.BinaryRelevance),
+#         que possua:
+#           - método `predict_proba(X)` retornando uma sequência com uma matriz por label
+#             (densa ou esparsa), de shape (n_amostras, n_classes_da_label);
+#           - atributo `classifiers_` com os classificadores por label, cada um contendo
+#             o atributo `classes_` (array de classes vistas no treino).
+#     X_test : pandas.DataFrame ou array-like de shape (n_samples, n_features)
+#         A matriz de atributos do conjunto de teste.
+#     Y_train : pandas.DataFrame de shape (n_samples_train, n_labels)
+#         Dados alvo usados no treino (apenas para obter a quantidade e a ordem dos rótulos
+#         e nome das colunas).
+# 
+#     Returns
+#     -------
+#     pandas.DataFrame
+#         DataFrame de shape (n_samples, n_labels) com a probabilidade da classe 1
+#         para cada label, nas colunas na mesma ordem de `Y_train.columns`.
+# 
+#     Raises
+#     ------
+#     ValueError
+#         Se o número de saídas retornadas por `predict_proba` não bater com o número
+#         de rótulos em `Y_train`.
+#     RuntimeError
+#         Se alguma predição tiver shape inesperado.
+# 
+#     Notes
+#     -----
+#     - Converte automaticamente saídas esparsas (`.toarray()`), evitando o erro
+#       `IndexError: column index (1) out of range`.
+#     - Para labels com apenas uma classe no treino, define probabilidade constante
+#       de acordo com `classifiers_[i].classes_[0]`.
+# 
+#     Examples
+#     --------
+#     >>> from skmultilearn.problem_transform import BinaryRelevance
+#     >>> from sklearn.ensemble import RandomForestClassifier
+#     >>> br = BinaryRelevance(RandomForestClassifier(random_state=0))
+#     >>> br.fit(X_train, Y_train)
+#     >>> proba_df = safe_predict_proba(br, X_test, Y_train)
+#     """
+#     # --- imports locais (garantem que a função é auto-contida) ----------------
+#     import numpy as np  # usado para alocar e manipular arrays numéricos
+#     import pandas as pd  # usado para construir o DataFrame de saída
+# 
+#     # Quantidade de labels (colunas em Y_train) -------------------------------
+#     n_labels = Y_train.shape[1]  # inteiro: nº de rótulos
+#     # Quantidade de amostras no teste -----------------------------------------
+#     n_samples = X_test.shape[0]  # inteiro: nº de amostras em X_test
+# 
+#     # Matriz de probabilidades (n_samples x n_labels), inicializada com zeros --
+#     probas = np.zeros((n_samples, n_labels), dtype=float)
+# 
+#     # Obtém as probabilidades por label a partir do modelo --------------------
+#     prob_list = model.predict_proba(X_test)  # esperado: sequência com 1 item por label
+# 
+#     # Normaliza o retorno para uma lista caso a impl. retorne algo não-lista ---
+#     if hasattr(prob_list, "shape"):  # se veio uma única matriz (não usual), embrulha em lista
+#         prob_list = [prob_list]
+#     elif not isinstance(prob_list, (list, tuple)):  # se for iterável diferente de list/tuple
+#         prob_list = list(prob_list)
+# 
+#     # Verifica consistência entre nº de saídas e nº de labels ------------------
+#     if len(prob_list) != n_labels:
+#         raise ValueError(
+#             f"Quantidade de saídas de predict_proba ({len(prob_list)}) "
+#             f"≠ nº de rótulos em Y_train ({n_labels})."
+#         )
+# 
+#     # Itera por label, convertendo e extraindo prob. da classe 1 --------------
+#     for i, probs in enumerate(prob_list):
+#         # Converte matriz esparsa para densa, se aplicável ---------------------
+#         if hasattr(probs, "toarray"):  # objetos scipy.sparse têm .toarray()
+#             probs = probs.toarray()
+# 
+#         # Garante shape 2D (n_samples, n_cols). Se vier 1D, remodela -----------
+#         if getattr(probs, "ndim", 2) == 1:
+#             probs = probs.reshape(-1, 1)
+# 
+#         # Número de colunas (classes) nesta label ------------------------------
+#         n_cols = probs.shape[1]
+# 
+#         if n_cols >= 2:
+#             # Caso comum: 2 colunas [P(classe=0), P(classe=1)] -----------------
+#             probas[:, i] = probs[:, 1]  # pega P(classe=1)
+#         elif n_cols == 1:
+#             # Caso de classe única no treino para esta label -------------------
+#             # classes_ contém as classes vistas (ex.: array([0]) ou array([1]))
+#             classes_i = getattr(model.classifiers_[i], "classes_", None)
+#             if classes_i is None or len(classes_i) != 1:
+#                 # Forma inesperada: não sabemos qual classe é a única ----------
+#                 raise RuntimeError(
+#                     f"Label {i}: shape {probs.shape} e classes_ inválidas: {classes_i}"
+#                 )
+#             single_class = int(classes_i[0])  # 0 ou 1
+#             # Define probabilidade constante coerente com a classe aprendida ----
+#             probas[:, i] = 1.0 if single_class == 1 else 0.0
+#         else:
+#             # Nenhuma coluna: shape inválido -----------------------------------
+#             raise RuntimeError(f"Label {i}: predições com shape inesperado: {probs.shape}")
+# 
+#     # Retorna DataFrame com as mesmas colunas/ordem de Y_train -----------------
+#     return pd.DataFrame(probas, columns=Y_train.columns)

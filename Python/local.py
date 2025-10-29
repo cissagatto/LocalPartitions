@@ -69,6 +69,13 @@ import measures as ms
 importlib.reload(ms)
 
 if __name__ == '__main__':
+
+    #train = pd.read_csv("/tmp/lr-cellcycle/Dataset/cellcycle/CrossValidation/Tr/cellcycle-Split-Tr-1.csv")
+    #valid = pd.read_csv("/tmp/lr-cellcycle/Dataset/cellcycle/CrossValidation/Vl/cellcycle-Split-Vl-1.csv")
+    #test = pd.read_csv("/tmp/lr-cellcycle/Dataset/cellcycle/CrossValidation/Ts/cellcycle-Split-Ts-1.csv")
+    #start = 77
+    #end = 255
+    #diretorio = "/tmp/lr-cellcycle/Local/Split-1"
     
     train = pd.read_csv(sys.argv[1])
     valid = pd.read_csv(sys.argv[2])
@@ -78,14 +85,8 @@ if __name__ == '__main__':
     diretorio = sys.argv[6]    
     
     # juntando treino com validação
-    train = pd.concat([train,valid],axis=0).reset_index(drop=True)
+    train = pd.concat([train,valid],axis=0).reset_index(drop=True)    
 
-    #train = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Tr/cal500-Split-Tr-1.csv")
-    #valid = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Vl/cal500-Split-Vl-1.csv")
-    #test = pd.read_csv("/home/cissagatto/LocalPartitions/Datasets/cal500/CrossValidation/Ts/cal500-Split-Ts-1.csv")
-    #start = 68
-    #end = 242
-    # diretorio = "/tmp/lr-GpositiveGO/Local/Split-1"
     
     print("\n\n%==============================================%")
     #print("train: ", sys.argv[1])
@@ -103,6 +104,14 @@ if __name__ == '__main__':
     # teste: separando os atributos e os rótulos
     X_test = test.iloc[:, :start]    # atributos 
     Y_test = test.iloc[:, start:]    # rótulos 
+
+    X_train.shape
+    Y_train.shape
+    X_test.shape
+    Y_test.shape
+
+    #Y_test.head(5)
+    #Y_train.head(5)
     
     # obtendo os nomes dos rótulos
     labels_y_train = list(Y_train.columns)    
@@ -110,29 +119,44 @@ if __name__ == '__main__':
     
     # obtendo os nomes dos atributos
     attr_x_train = list(X_train.columns)
-    attr_x_test = list(X_test.columns)
+    attr_x_test = list(X_test.columns)    
+
+    Y_train_dense = np.array(Y_train)
+    Y_test_dense = np.array(Y_test)
     
     # parametros do classificador base
     random_state = 1234    
     n_estimators = 200
     baseModel = RandomForestClassifier(n_estimators = n_estimators, random_state = random_state)
     classifier = BinaryRelevance(baseModel)
-    
+    #classifier = BinaryRelevance(classifier=baseModel, require_dense=[True, True])
+
     start_train_time = time.time()
+    #classifier.fit(X_train.values, Y_train_dense)
     classifier.fit(X_train, Y_train)
     end_train_time = time.time()
-    training_time = end_train_time - start_train_time  
+    training_time = end_train_time - start_train_time    
+    
+    #start_train_time = time.time()
+    #classifier.fit(X_train, Y_train)
+    #end_train_time = time.time()
+    #training_time = end_train_time - start_train_time  
     
     start_test_time = time.time()
     binary_predictions = classifier.predict(X_test.values)
     end_test_time = time.time()
-    testing_time_bin = end_test_time - start_test_time
-    
+    testing_time_bin = end_test_time - start_test_time    
+
     start_test_time = time.time()
     #probabilities = classifier.predict_proba(X_test.values)
+    #probabilities = classifier.predict_proba(X_test)
     probabilities = eval.safe_predict_proba(classifier, X_test, Y_train)
     end_test_time = time.time()
-    testing_time_proba = end_test_time - start_test_time
+    testing_time_proba = end_test_time - start_test_time    
+
+    for col in Y_train_dense.T:
+        print(np.unique(col))
+
     
     true = (diretorio + "/y_true.csv")
     pred = (diretorio + "/y_pred_bin.csv")

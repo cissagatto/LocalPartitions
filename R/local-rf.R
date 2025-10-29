@@ -99,7 +99,7 @@ execute.local.python <- function(parameters){
     
     ##################################################################
     str.execute = paste("python3 ", parameters$Directories$folderPython,
-                        "/local.py ", 
+                        "/local2.py ", 
                         nome.tr.csv, " ",
                         nome.vl.csv,  " ",
                         nome.ts.csv, " ", 
@@ -108,12 +108,20 @@ execute.local.python <- function(parameters){
                         FolderSplit,
                         sep="")
     
+    print(str.execute)
+    
     # EXECUTA
-    start <- proc.time()
+    # start <- proc.time()
+    
     res = system(str.execute)
-    tempo = data.matrix((proc.time() - start))
-    tempo = data.frame(t(tempo))
-    write.csv(tempo, paste(FolderSplit, "/runtime-fold.csv", sep=""))
+    if(res!=0){
+      message("\n\n Something went wrong in python\n\n")
+      break
+    }
+    
+    #tempo = data.matrix((proc.time() - start))
+    #tempo = data.frame(t(tempo))
+    #write.csv(tempo, paste(FolderSplit, "/runtime-fold.csv", sep=""))
     
     # f = f + 1
     gc()
@@ -232,14 +240,15 @@ evaluate.local.python <- function(parameters){
     avaliacao(f = f, y_true = y.true.3, y_pred = y_pred_proba,
               salva = FolderSplit, nome = "results-utiml")
     
-    # avaliacao(f = f, y_true = y.true.3, y_pred = y_pred_bin,
-    #           salva = FolderSplit, nome = "pred-bin")
-    # 
-    # avaliacao(f = f, y_true = y.true.3, y_pred = y_threshold_05,
-    #           salva = FolderSplit, nome = "thr-05")
-    # 
-    # avaliacao(f = f, y_true = y.true.3, y_pred = y_threshold_card,
-    #           salva = FolderSplit, nome = "thr-lc")
+    roc.curva(f = f, y_pred = y_pred_proba, test = y.true.3, 
+              Folder = FolderSplit, 
+              nome = paste(FolderSplit, "/results-mldr.csv", sep=""))
+    
+    # auprc.curve <- function(y_true, y_proba, Folder, nome){
+    auprc.curve(y_true = y_true, 
+                y_proba = y_pred_proba,
+                Folder = FolderSplit, 
+                nome = paste(FolderSplit, "/results-r.csv", sep=""))
     
     ###########################################################################
     # names files
@@ -276,10 +285,11 @@ evaluate.local.python <- function(parameters){
 ###########################################################################
 gather.eval.python.silho <- function(parameters){
   
-  final.runtime.r = data.frame()
-  final.runtime.p = data.frame()
+  final.runtime = data.frame()
   final.results = data.frame(apagar=c(0))
-  total.model.size = data.frame()
+  final.results.2 = data.frame(apagar=c(0))
+  final.model.size = data.frame()
+  final.auprc = data.frame() 
   
   f = 1
   while(f<=parameters$Config$Number.Folds){
@@ -295,62 +305,76 @@ gather.eval.python.silho <- function(parameters){
                                            "/results-python.csv", sep="")))
     names(res.python) = c("Measures", paste0("Fold",f))
     
-    #########################################################################
     res.utiml = data.frame(read.csv(paste(folderSplit, 
                                           "/results-utiml.csv", sep="")))
     names(res.utiml) = c("Measures", paste0("Fold",f))
     
-    #########################################################################
     resultados = rbind(res.python, res.utiml)
     final.results = cbind(final.results, resultados)
+    
+    #########################################################################
+    res.mldr = data.frame(read.csv(paste(folderSplit, 
+                                          "/results-mldr.csv", sep="")))
+    names(res.mldr ) = c("Measures", paste0("Fold",f))
+    
+    res.r = data.frame(read.csv(paste(folderSplit, 
+                                         "/results-r.csv", sep="")))
+    names(res.r) = c("Measures", paste0("Fold",f))
+    
+    resultados = rbind(res.mldr, res.r)
+    final.results.2 = cbind(final.results.2, resultados)
     
     #########################################################################
     res.model.size = data.frame(read.csv(paste(folderSplit, 
                                                "/model-size.csv", sep="")))
     names(res.model.size) = "Bytes"
     resultado = data.frame(fold = f, res.model.size)
-    total.model.size = rbind(total.model.size, resultado)
-    
-    #########################################################################
-    res.runtime.fold = data.frame(read.csv(paste(folderSplit, 
-                                                 "/runtime-fold.csv", sep="")))
-    res.runtime.fold = res.runtime.fold[,-1]
-    res.runtime.fold = data.frame(fold=f, res.runtime.fold)
-    final.runtime.r = rbind(final.runtime.r, res.runtime.fold)
+    final.model.size = rbind(final.model.size, resultado)
     
     #########################################################################
     res.runtime.python = data.frame(read.csv(paste(folderSplit, 
                                                    "/runtime-python.csv", sep="")))
-    names(res.runtime.python) = c("Process", "Time")
-    tempo = data.frame(t(res.runtime.python))
-    colunas = tempo[1,]
-    colnames(tempo) = colunas
-    tempo = tempo[-1,]
-    tempo = data.frame(fold = f,tempo)
-    rownames(tempo) = NULL
-    final.runtime.p = rbind(final.runtime.p, tempo)
+    res.runtime.python = data.frame(fold = f, res.runtime.python)
+    final.runtime = rbind(final.runtime, res.runtime.python)
+    
+    #########################################################################
+    res.auprc = data.frame(read.csv(paste(folderSplit, 
+                                          "/r-auprc-per-label.csv", sep="")))
+    res.auprc = data.frame(fold = f, res.auprc)
+    final.auprc = rbind(final.auprc, res.auprc)
     
     #################################
     # /tmp/gr-emotions/Global/Split-1
-    system(paste0("rm -r ", folderSplit, "/results-python.csv", sep=""))
-    system(paste0("rm -r ", folderSplit, "/results-utiml.csv", sep=""))
     system(paste0("rm -r ", folderSplit, "/model-size.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/r-auprc-per-label.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/results-mldr.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/results-python.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/results-r.csv", sep=""))
+    system(paste0("rm -r ", folderSplit, "/results-utiml.csv", sep=""))
     system(paste0("rm -r ", folderSplit, "/runtime-python.csv", sep=""))
-    system(paste0("rm -r ", folderSplit, "/runtime-fold.csv", sep=""))
     
     f = f + 1
     gc()
   } 
   
-  
-  setwd(parameters$Directories$FolderLocal)
   final.results <- final.results[, !duplicated(colnames(final.results))]
   final.results = final.results[,-1]
-  write.csv(final.results, "performance.csv", row.names = FALSE)
+  nome = paste0(parameters$Directories$FolderLocal, "/performance.csv")
+  write.csv(final.results, nome, row.names = FALSE)
   
-  write.csv(total.model.size, "model-size.csv", row.names = FALSE)
-  write.csv(final.runtime.r, "runtime-r.csv", row.names = FALSE)
-  write.csv(final.runtime.p, "runtime-p.csv", row.names = FALSE)
+  final.results.2 <- final.results.2[, !duplicated(colnames(final.results.2))]
+  final.results.2 = final.results.2[,-1]
+  nome = paste0(parameters$Directories$FolderLocal, "/performance2.csv")
+  write.csv(final.results.2, nome, row.names = FALSE)
+  
+  nome = paste0(parameters$Directories$FolderLocal, "/model-size.csv")
+  write.csv(final.model.size, nome, row.names = FALSE)
+  
+  nome = paste0(parameters$Directories$FolderLocal, "/runtime.csv")
+  write.csv(final.runtime, nome, row.names = FALSE)
+  
+  nome = paste0(parameters$Directories$FolderLocal, "/auprc-r.csv")
+  write.csv(final.auprc, nome, row.names = FALSE)
   
   gc()
   cat("\n########################################################")
@@ -358,9 +382,6 @@ gather.eval.python.silho <- function(parameters){
   cat("\n########################################################")
   cat("\n\n\n\n")
 }
-
-
-
 
 
 

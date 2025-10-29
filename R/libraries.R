@@ -40,36 +40,37 @@
 ##############################################################################
 
 
-# -----------------------------------------------------------------------------
-# AUTO-INSTALL AND LOAD REQUIRED PACKAGES FOR MULTI-LABEL SCRIPT (v2025)
-# -----------------------------------------------------------------------------
+##############################################################################
+# LOCAL PARTITIONS MULTI-LABEL CLASSIFICATION                                #
+# Auto-install packages script - adapted for Miniforge/conda                 #
+##############################################################################
 
+# -----------------------------------------------------------------------------
 # Load required library
+# -----------------------------------------------------------------------------
 if (!require("here", quietly = TRUE)) install.packages("here", dependencies = TRUE)
 library(here)
 
-# Define root folder (optional, from original script)
+# Define root folder (optional)
 FolderRoot <- here::here()
 FolderScripts <- here::here("R")
 
 # -----------------------------------------------------------------------------
 # List of required packages
 # -----------------------------------------------------------------------------
-
 cran_packages <- c(
   "foreign", "stringr", "parallel", "rJava", "RWeka", "utiml",
-  "mldr", "foreach", "doParallel", "tidyverse", "magrittr","Matrix"
+  "mldr", "foreach", "doParallel", "tidyverse", "magrittr", "Matrix"
 )
 
 base_packages <- c("parallel")
 
-# If any GitHub packages are needed later, define them here
 github_packages <- list(
   # Example: "somepkg" = "user/repo"
 )
 
 # -----------------------------------------------------------------------------
-# Install CRAN package if missing
+# Helper function to install CRAN package
 # -----------------------------------------------------------------------------
 install_cran_package <- function(pkg) {
   if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
@@ -87,7 +88,7 @@ install_cran_package <- function(pkg) {
 }
 
 # -----------------------------------------------------------------------------
-# Install GitHub package if missing
+# Helper function to install GitHub package
 # -----------------------------------------------------------------------------
 install_github_package <- function(pkg, repo) {
   if (!require(pkg, character.only = TRUE, quietly = TRUE)) {
@@ -124,7 +125,22 @@ for (pkg in cran_packages) {
 }
 
 # -----------------------------------------------------------------------------
-# Install and load GitHub packages (if any)
+# Special case: PRROC
+# -----------------------------------------------------------------------------
+if (!require("PRROC", quietly = TRUE)) {
+  if (Sys.getenv("CONDA_PREFIX") != "") {
+    message("Installing PRROC via conda-forge...")
+    system("conda install -c conda-forge r-prroc -y")
+    library(PRROC)
+  } else {
+    install_cran_package("PRROC")
+  }
+} else {
+  message("✅ Package PRROC is already installed.")
+}
+
+# -----------------------------------------------------------------------------
+# Install and load GitHub packages
 # -----------------------------------------------------------------------------
 for (pkg in names(github_packages)) {
   install_github_package(pkg, github_packages[[pkg]])
@@ -132,9 +148,7 @@ for (pkg in names(github_packages)) {
 
 message("🎉 All packages have been successfully verified and loaded!")
 
-
-
-##################################################################################################
-# Please, any errors, contact us: elainececiliagatto@gmail.com                                   #
-# Thank you very much!                                                                           #
-##################################################################################################
+##############################################################################
+# Please, any errors, contact us: elainececiliagatto@gmail.com
+# Thank you very much!
+##############################################################################

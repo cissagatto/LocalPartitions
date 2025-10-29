@@ -87,8 +87,7 @@ args <- commandArgs(TRUE)
 config_file <- args[1]
 
 
-# config_file = "/home/cissagatto/LocalPartitions/config-files/lr-GpositiveGO-1.csv"
-
+# config_file = "~/LocalPartitions/config-files/lr-GpositiveGO.csv"
 
 
 parameters$Config.File$Name = config_file
@@ -163,7 +162,7 @@ source(file.path(FolderScripts, "libraries.R"))
 source(file.path(FolderScripts, "utils.R"))
 
 
-cat("\n###############################\n")
+cat("\n###############################")
 cat("\n# Get directories             #")
 cat("\n###############################\n\n")
 diretorios <- directories(parameters)
@@ -232,30 +231,30 @@ if(implementation=="rf"){
   
   source(file.path(FolderScripts, "run-rf.R"))
   
-  cat("\n\n############################################################")
-  cat("\n# RSCRIPT Local RANDOM FORESTS START                     #")
-  cat("\n###########################################################\n\n")
+  cat("\n\n##########################################################")
+    cat("\n# RSCRIPT Local RANDOM FORESTS START                     #")
+    cat("\n##########################################################\n\n")
   timeFinal <- system.time(results <- run.rf(parameters))  
   
   
   cat("\n\n#####################################################")
-  cat("\n# RSCRIPT SAVE RUNTIME                              #")
-  cat("\n#####################################################\n\n")
+    cat("\n# RSCRIPT SAVE RUNTIME                              #")
+    cat("\n#####################################################\n\n")
   result_set <- t(data.matrix(timeFinal))
   setwd(parameters$Directories$FolderLocal)
-  write.csv(result_set, "Final-Runtime.csv", row.names = FALSE)
+  write.csv(result_set, "runtime-script.csv", row.names = FALSE)
   
   
   cat("\n\n###################################################")
-  cat("\n# RSCRIPT DELETE                                  #")
-  cat("\n###################################################\n\n")
+    cat("\n# RSCRIPT DELETE                                  #")
+    cat("\n###################################################\n\n")
   str5 = paste("rm -r ", parameters$Directories$FolderDataset, sep="")
   print(system(str5))
   
   
-  cat("\n\n###################################################################")
-  cat("\n# LOCAL: COMPRESS RESULTS                                      #")
-  cat("\n#####################################################################\n\n")
+  cat("\n\n########################################################")
+    cat("\n# LOCAL: COMPRESS RESULTS                              #")
+    cat("\n########################################################\n\n")
   # str3 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
   #              parameters$Dataset.Info$Name, "-results-local.tar.gz ",
   #              parameters$Directories$FolderLocal, sep="")
@@ -267,9 +266,9 @@ if(implementation=="rf"){
   print(system(str_01))
   
   
-  cat("\n\n###################################################################")
-  cat("\n# ====> LPC: COPY TO HOME                                     #")
-  cat("\n#####################################################################\n\n")
+  cat("\n\n###########################################################")
+    cat("\n# ====> Local: COPY TO HOME                               #")
+    cat("\n###########################################################\n\n")
   
   str_02 = parameters$Directories$folderReports
   if(dir.exists(str_02)==FALSE){dir.create(str_02)}

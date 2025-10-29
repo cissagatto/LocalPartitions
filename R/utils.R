@@ -596,8 +596,11 @@ avaliacao <- function(f, y_true, y_pred, salva, nome){
   resConfMat = multilabel_evaluate(confmat)
   resConfMat = data.frame(resConfMat)
   names(resConfMat) = paste("Fold-", f, sep="")
+  Measure = rownames(resConfMat)
+  resConfMat = data.frame(Measure, resConfMat)
+  rownames(resConfMat) = NULL
   salva.1 = paste(salva, "/", nome, ".csv", sep="")
-  write.csv(resConfMat, salva.1)
+  write.csv(resConfMat, salva.1, row.names = FALSE)
   
   conf.mat = data.frame(confmat$TPl, confmat$FPl,
                         confmat$FNl, confmat$TNl)
@@ -616,7 +619,117 @@ avaliacao <- function(f, y_true, y_pred, salva, nome){
   
 }
 
+
+roc.curva <- function(f, y_pred, test, Folder, nome){
+  
+  res = mldr_evaluate(test, y_pred)
+  
+  ###############################################################
+  # PLOTANDO ROC CURVE
+  #name = paste(Folder, "/roc.pdf", sep="")
+  #pdf(name, width = 10, height = 8)
+  #print(plot(res$roc, print.thres = 'best', print.auc=TRUE, 
+  #            print.thres.cex=0.7, grid = TRUE, identity=TRUE,
+  #            axes = TRUE, legacy.axes = TRUE, 
+  #            identity.col = "#a91e0e", col = "#1161d5",
+  #            main = paste("fold ", f, " ", nome, sep="")))
+  #dev.off()
+  #cat("\n")
+  
+  ###############################################################
+  # Transformar a lista em data frame, removendo 'roc' para evitar problemas
+  df_res <- res
+  if("roc" %in% names(df_res)) df_res$roc <- NULL
+  
+  df_metrics <- data.frame(
+    metric = names(df_res),
+    value = unlist(df_res)
+  )
+  
+  # Se quiser, também adiciona a AUC do objeto ROC
+  if(!is.null(res$roc)) {
+    df_metrics <- rbind(df_metrics, data.frame(
+      metric = "roc_auc",
+      value = res$roc$auc
+    ))
+  }
+  
+  colnames(df_metrics) = c("Measure", "Value")
+  write.csv(df_metrics, nome, row.names = FALSE)
+  
+}
+
+
+auprc.curve <- function(y_true, y_proba, Folder, nome){
+  library(PRROC)
+  
+  # Garantindo que y_true e y_score sejam matrizes
+  y_true <- as.matrix(y_true)
+  y_score <- as.matrix(y_proba)
+  
+  auprc_list <- c()
+  
+  for(i in 1:ncol(y_true)){
+    cat("\n", i)
+    # Evita erro quando não houver positivos ou negativos
+    if(sum(y_true[, i] == 1) == 0 | sum(y_true[, i] == 0) == 0) {
+      auprc_list[i] <- NA
+      next
+    }
+    
+    pr_obj <- pr.curve(
+      scores.class0 = y_score[y_true[, i] == 1, i],
+      scores.class1 = y_score[y_true[, i] == 0, i],
+      curve = TRUE
+    )
+    
+    auprc_list[i] <- pr_obj$auc.integral
+    
+    #nome = paste("AUPRC-Label", i, ".pdf", sep="")
+    #pdf(file = paste0(Folder, "/", nome), width = 8, height = 6)
+    #plot(pr_obj, main = paste("PR Curve label", i))
+    #dev.off()
+  }
+  
+  auprc_per_labels = data.frame(t(auprc_list))
+  colnames(auprc_per_labels) = colnames(y_true)
+  nome1 = paste(Folder, "/r-auprc-per-label.csv", sep="")
+  write.csv(auprc_per_labels, nome1, row.names = FALSE)
+  
+  # Macro AUPRC
+  auprc_macro <- mean(auprc_list, na.rm = TRUE)
+  
+  # Micro AUPRC: achata tudo
+  y_true_vec <- as.vector(y_true)
+  y_score_vec <- as.vector(y_score)
+  pr_micro <- pr.curve(
+    scores.class0 = y_score_vec[y_true_vec == 1],
+    scores.class1 = y_score_vec[y_true_vec == 0],
+    curve = TRUE
+  )
+  auprc_micro <- pr_micro$auc.integral
+  
+  auprc = data.frame(auprc_micro, auprc_macro)
+  auprc = data.frame(t(auprc))
+  Measure = rownames(auprc)
+  auprc = data.frame(Measure, auprc)
+  rownames(auprc) = NULL
+  colnames(auprc) = c("Measure", "Value")
+  write.csv(auprc, nome, row.names = FALSE)
+  
+  # Salvar gráfico
+  # pdf("PR_micro.pdf", width = 8, height = 6)
+  # plot(pr_micro, main = "Micro-PR Curve (AUPRC Global)")
+  # dev.off()
+  
+}
+
+
+
+
 ###############################################################################
 # Please, any errors, contact us: elainececiliagatto@gmail.com                #
 # Thank you very much!                                                        #
 ###############################################################################
+
+

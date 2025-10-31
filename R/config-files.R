@@ -110,11 +110,11 @@ while(w<=length(Implementation.1)){
     # Config file table header
     write("Config, Value", file = output.file, append = TRUE)
     
-    write("FolderScript, ~/LocalPartitions/R", 
+    write("FolderScript, /lapix/arquivos/elaine/LocalPartitions/R", 
           file = output.file, append = TRUE)
     
-    # /lapix/arquivos/elaine
-    write("Dataset_Path, ~/LocalPartitions/Datasets", 
+    # 
+    write("Dataset_Path, /lapix/arquivos/elaine/LocalPartitions/Datasets", 
           file = output.file, append = TRUE)
     
     name = paste("l", Implementation.2[w], "-", ds$Name, sep = "")
@@ -144,7 +144,7 @@ while(w<=length(Implementation.1)){
     write("Number_Folds, 10", file = output.file, append = TRUE)
     
     # Number of cores to use for parallel processing
-    write("Number_Cores, 1", file = output.file, append = TRUE)
+    write("Number_Cores, 10", file = output.file, append = TRUE)
     
     # finish writing to the configuration file
     close(output.file)

@@ -197,7 +197,6 @@ FolderScripts <- here::here("R")
 ###########################################
 #
 ##########################################
-
 compute.label.dependecy <- function(parameters) {
   final <- data.frame(fold = integer(), dependency.label = numeric())
   
@@ -292,8 +291,48 @@ labelSpace <- function(parameters){
 
 
 ###############################################################################
-#
-###############################################################################
+#' Convert CSV files to ARFF format using a Java converter
+#'
+#' @description
+#' This function calls a Java JAR file (`R_csv_2_arff.jar`) to convert a CSV dataset
+#' into an ARFF file format (used by Weka and other machine learning tools).
+#' It builds the system command dynamically and executes it from within R.
+#'
+#' @details
+#' The function assumes that the Java JAR converter (`R_csv_2_arff.jar`) is located
+#' in the folder specified by `FolderUtils`. The user must have Java properly installed
+#' and accessible through the system PATH.
+#'
+#' @param arg1 Character. The path to the input CSV file to be converted.
+#' @param arg2 Character. The path or name of the output ARFF file to be generated.
+#' @param arg3 Character. Additional parameters to be passed to the Java converter.
+#' @param FolderUtils Character. The directory containing the `R_csv_2_arff.jar` file.
+#'
+#' @return
+#' The function prints the result of the system command execution to the console.
+#' It does not return any R object (invisible return of `NULL`).
+#'
+#' @examples
+#' \dontrun{
+#' # Example usage:
+#' FolderUtils <- "/home/user/utils"
+#' input_csv <- "/home/user/data/sample.csv"
+#' output_arff <- "/home/user/data/sample.arff"
+#'
+#' converteArff(input_csv, output_arff, "", FolderUtils)
+#' }
+#'
+#' @author Elaine Cecília Gatto - Cissa
+#'
+#' @seealso
+#' [system()] for executing system commands in R,
+#' [paste()] for string concatenation.
+#'
+#' @note
+#' Make sure Java is installed and available in your system environment.
+#' The JAR file `R_csv_2_arff.jar` must exist in the specified `FolderUtils` directory.
+#'
+#' @export
 converteArff <- function(arg1, arg2, arg3, FolderUtils){  
   str = paste("java -jar ", FolderUtils,  "/R_csv_2_arff.jar ", 
               arg1, " ", arg2, " ", arg3, sep="")
@@ -585,6 +624,61 @@ infoDataSet <- function(dataset){
 }
 
 
+
+#########################################################################################################
+#' Evaluate multilabel classification results and save performance metrics
+#'
+#' @description
+#' This function performs multilabel model evaluation by computing confusion matrices
+#' and derived performance measures. It saves the main evaluation results to CSV files
+#' for further analysis and reporting.
+#'
+#' @details
+#' The function uses `multilabel_confusion_matrix()` to generate per-label confusion
+#' matrices from the true and predicted multilabel sets. Then, it computes overall
+#' evaluation metrics using `multilabel_evaluate()` and organizes the results in
+#' structured tables. Summary information, including true/false positives and negatives,
+#' is saved in CSV format.
+#'
+#' @param f Integer or character. Identifier for the current fold (used in cross-validation).
+#' It is appended to column names in the output.
+#' @param y_true Data frame or list. Ground truth labels for the multilabel task.
+#' Must contain one column per label.
+#' @param y_pred Data frame or list. Predicted labels with the same structure as `y_true`.
+#' @param salva Character. Directory path where result files will be saved.
+#' @param nome Character. Base name used to name the output CSV files.
+#'
+#' @return
+#' This function writes the following files to disk:
+#' \itemize{
+#'   \item `<nome>.csv` — evaluation metrics for the given fold.
+#'   \item `<nome>-utiml.csv` — detailed confusion matrix statistics (optional, currently commented).
+#' }
+#' The function does not return an object in R (invisible `NULL`).
+#'
+#' @examples
+#' \dontrun{
+#' # Example: evaluating multilabel predictions for one fold
+#' y_true <- data.frame(L1 = c(1,0,1,0), L2 = c(0,1,1,0))
+#' y_pred <- data.frame(L1 = c(1,0,0,0), L2 = c(1,1,0,0))
+#' output_dir <- "results"
+#' dir.create(output_dir, showWarnings = FALSE)
+#'
+#' avaliacao(f = 1, y_true = y_true, y_pred = y_pred,
+#'           salva = output_dir, nome = "Fold1_results")
+#' }
+#'
+#' @author Elaine Cecília Gatto - Cissa
+#'
+#' @seealso
+#' [multilabel_confusion_matrix()], [multilabel_evaluate()],
+#' [write.csv()] for saving structured outputs.
+#'
+#' @note
+#' The helper functions `multilabel_confusion_matrix()` and `multilabel_evaluate()`
+#' must be available in the environment or loaded from the appropriate library.
+#'
+#' @export
 avaliacao <- function(f, y_true, y_pred, salva, nome){
   
   #salva.0 = paste(salva, "/", nome, "-conf-mat.txt", sep="")
@@ -612,7 +706,7 @@ avaliacao <- function(f, y_true, y_pred, salva, nome){
   correct = conf.mat$TP + conf.mat$TN
   correct.perc = correct/nrow(y_true$dataset)
   conf.mat.2 = data.frame(conf.mat, conf.mat.perc, wrong, correct, 
-                              wrong.perc, correct.perc)
+                          wrong.perc, correct.perc)
   salva.2 = paste(salva, "/", nome, "-utiml.csv", sep="")
   #write.csv(conf.mat.2, salva.2)
   
@@ -620,7 +714,59 @@ avaliacao <- function(f, y_true, y_pred, salva, nome){
 }
 
 
-roc.curva <- function(f, y_pred, test, Folder, nome){
+#########################################################################################################
+#' Compute and export ROC curve evaluation for multilabel classification
+#'
+#' @description
+#' This function evaluates the ROC (Receiver Operating Characteristic) metrics
+#' for multilabel classification results and exports the computed metrics to a CSV file.
+#' Optionally, the function can also plot and save the ROC curve (the plotting code
+#' is currently commented out but preserved for reference).
+#'
+#' @details
+#' The function uses \code{mldr_evaluate()} to compute performance metrics and
+#' ROC-related statistics for multilabel models. The results are converted into a
+#' clean data frame and saved to disk. If the ROC object is available, its AUC
+#' (Area Under the Curve) is extracted and appended to the output.
+#'
+#' @param f Integer or character. Identifier of the fold being evaluated (used in cross-validation).
+#' @param y_pred Data frame or list. Predicted label scores or probabilities from the model.
+#' @param test Data frame or list. True labels for the test partition.
+#' @param Folder Character. Directory path where output files (e.g., plots or CSVs) will be saved.
+#' @param nome Character. The name of the output CSV file (including path if needed).
+#'
+#' @return
+#' A CSV file is written to disk containing all evaluation metrics derived from
+#' \code{mldr_evaluate()}, including (if available) the ROC AUC value.
+#' The function does not return an R object (invisible \code{NULL}).
+#'
+#' @examples
+#' \dontrun{
+#' test <- data.frame(L1 = c(1, 0, 1, 0), L2 = c(0, 1, 1, 0))
+#' y_pred <- data.frame(L1 = c(0.9, 0.2, 0.8, 0.3),
+#'                      L2 = c(0.1, 0.7, 0.6, 0.4))
+#' output_dir <- "results"
+#' dir.create(output_dir, showWarnings = FALSE)
+#'
+#' roc.curve(f = 1, y_pred = y_pred, test = test,
+#'           Folder = output_dir,
+#'           nome = paste0(output_dir, "/fold1_roc.csv"))
+#' }
+#'
+#' @author Elaine Cecília Gatto - Cissa
+#'
+#' @seealso
+#' [mldr_evaluate()] for multilabel evaluation,
+#' [plot()] for ROC curve visualization,
+#' and [write.csv()] for saving structured metrics.
+#'
+#' @note
+#' Ensure that the \code{mldr} package (or any library providing \code{mldr_evaluate})
+#' is loaded in your environment. The commented ROC plotting section can be re-enabled
+#' if graphical outputs are required.
+#'
+#' @export
+roc.curve <- function(f, y_pred, test, Folder, nome){
   
   res = mldr_evaluate(test, y_pred)
   
@@ -660,6 +806,72 @@ roc.curva <- function(f, y_pred, test, Folder, nome){
 }
 
 
+
+#' Compute and export AUPRC (Precision-Recall) metrics for multilabel classification
+#'
+#' @description
+#' This function computes the AUPRC (Area Under the Precision-Recall Curve)
+#' for each label in a multilabel classification problem. It also calculates
+#' macro and micro AUPRC scores and exports the results as CSV files.
+#' Optional plotting code for PR curves is included (commented out).
+#'
+#' @details
+#' The function evaluates per-label and aggregated AUPRC metrics using
+#' the \code{PRROC} package. For each label, a precision-recall curve is
+#' generated when possible (skipping labels with only one class present).
+#' It writes two CSV outputs:
+#' \itemize{
+#'   \item \code{r-auprc-per-label.csv}: AUPRC values for each label.
+#'   \item A file specified by \code{nome}: macro and micro AUPRC scores.
+#' }
+#'
+#' @param y_true Matrix or data frame. True binary labels (0 or 1) for each class.
+#' @param y_proba Matrix or data frame. Predicted probabilities or confidence scores for each class.
+#' @param Folder Character. Directory where output CSV files will be saved.
+#' @param nome Character. The name of the main output CSV file containing macro and micro AUPRC values.
+#'
+#' @return
+#' Two CSV files are written to disk:
+#' \enumerate{
+#'   \item \code{r-auprc-per-label.csv}: per-label AUPRC values.
+#'   \item The file specified in \code{nome}: overall macro and micro AUPRC values.
+#' }
+#' The function does not return an R object (invisible \code{NULL}).
+#'
+#' @examples
+#' \dontrun{
+#' # Example data
+#' y_true <- data.frame(
+#'   L1 = c(1, 0, 1, 0),
+#'   L2 = c(0, 1, 1, 0)
+#' )
+#' y_proba <- data.frame(
+#'   L1 = c(0.9, 0.2, 0.8, 0.3),
+#'   L2 = c(0.1, 0.7, 0.6, 0.4)
+#' )
+#'
+#' # Output directory and filenames
+#' Folder <- "results"
+#' dir.create(Folder, showWarnings = FALSE)
+#'
+#' auprc.curve(y_true = y_true, y_proba = y_proba,
+#'             Folder = Folder,
+#'             nome = paste0(Folder, "/auprc-summary.csv"))
+#' }
+#'
+#' @author Elaine Cecília Gatto - Cissa
+#'
+#' @seealso
+#' [PRROC::pr.curve()] for PR curve and AUPRC computation,
+#' [write.csv()] for saving structured metrics.
+#'
+#' @note
+#' This function requires the \code{PRROC} package.
+#' Labels with no positive or negative instances are skipped (AUPRC = NA).
+#' The commented plotting code can be re-enabled to generate per-label
+#' and global PR curve visualizations.
+#'
+#' @export
 auprc.curve <- function(y_true, y_proba, Folder, nome){
   library(PRROC)
   
@@ -723,6 +935,8 @@ auprc.curve <- function(y_true, y_proba, Folder, nome){
   # dev.off()
   
 }
+
+
 
 
 

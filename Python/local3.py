@@ -91,23 +91,22 @@ if __name__ == '__main__':
     train = pd.concat([train,valid],axis=0).reset_index(drop=True)    
 
     
-    print("\n\n%==============================================%")
-    print("train: ", sys.argv[1])
-    print("valid: ", sys.argv[2])
-    print("test: ", sys.argv[3])
-    print("start: ", sys.argv[4])
-    print("end: ", sys.argv[5])
-    print("directory: ", sys.argv[6])
-    print("%==============================================%\n\n")
+    #print("\n\n%==============================================%")
+    #print("train: ", sys.argv[1])
+    #print("valid: ", sys.argv[2])
+    #print("test: ", sys.argv[3])
+    #print("start: ", sys.argv[4])
+    #print("end: ", sys.argv[5])
+    #print("directory: ", sys.argv[6])
+    #print("%==============================================%\n\n")
+
         
     # separa atributos e rótulos
     X_train = train.iloc[:, :start]
     Y_train = train.iloc[:, start:]
     X_test = test.iloc[:, :start]
     Y_test = test.iloc[:, start:]
-
     labels_y_test = list(Y_test.columns)
-
     Y_train_dense = np.array(Y_train)
     Y_test_dense = np.array(Y_test)
 
@@ -167,11 +166,14 @@ if __name__ == '__main__':
         testing_time_proba
     ]], columns=["training", "testing_bin", "testing_proba"])
     df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
-
-
-    # ======= SAVE MEASURES =======    
-    metrics_df = eval.multilabel_curves_measures(Y_test, pd.DataFrame(probas_df, columns=labels_y_test))
-    metrics_df.to_csv(os.path.join(diretorio, "results-python.csv"), index=False)
+ 
+ 
+    # =========== SAVE MEASURES ===========   
+    metrics_df, ignored_df = eval.multilabel_curve_metrics(Y_test, probas_df)    
+    name = (diretorio + "/results-python.csv") 
+    metrics_df.to_csv(name, index=False)  
+    name = (diretorio + "/ignored-classes.csv") 
+    ignored_df.to_csv(name, index=False)      
 
     
     # ======= SAVE MODEL SIZE =======

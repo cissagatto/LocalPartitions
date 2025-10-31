@@ -1,6 +1,6 @@
-cat("\n\n###############################################################")
+cat("\n\n##############################################################")
   cat("\n# RSCRIPT: START EXECUTE LOCAL PARTITIONS                    #")
-  cat("\n###############################################################\n\n")
+  cat("\n##############################################################\n\n")
 
 
 # clean
@@ -63,10 +63,11 @@ cat("\n########################################\n\n")
 options(java.parameters = "-Xmx64g")  # JAVA
 options(show.error.messages = TRUE)   # ERROR MESSAGES
 options(scipen=20)                    # number of places after the comma
+options(repos = c(CRAN = "https://cloud.r-project.org"))
 
 
 cat("\n########################################")
-cat("\n# Creating parameters list              #")
+cat("\n# Creating parameters list             #")
 cat("\n########################################\n\n")
 parameters = list()
 
@@ -87,15 +88,15 @@ args <- commandArgs(TRUE)
 config_file <- args[1]
 
 
-# config_file = "~/LocalPartitions/config-files/lr-GpositiveGO.csv"
+# config_file = "~/LocalPartitions/config-files/lr-GnegativeGO-1.csv"
 
 
 parameters$Config.File$Name = config_file
 if(file.exists(config_file)==FALSE){
   cat("\n################################################################")
-  cat("#\n Missing Config File! Verify the following path:              #")
-  cat("#\n ", config_file, "                                            #")
-  cat("#################################################################\n\n")
+  cat("\n# Missing Config File! Verify the following path:              #")
+  cat("\n################################################################")
+  cat("\n# ", config_file)
   break
 } else {
   cat("\n########################################")
@@ -105,15 +106,14 @@ if(file.exists(config_file)==FALSE){
 
 
 cat("\n########################################")
-cat("\n# Config File                          #\n")
+cat("\n# Config File                          #")
+cat("\n########################################")
 config = data.frame(read.csv(config_file))
 print(config)
-cat("\n########################################\n\n")
-
 
 
 cat("\n########################################")
-cat("\n# Getting Parameters                   #\n")
+cat("\n# Getting Parameters                   #")
 cat("\n########################################")
 FolderScripts = toString(config$Value[1])
 FolderScripts = str_remove(FolderScripts, pattern = " ")
@@ -148,6 +148,7 @@ ds = datasets[number_dataset,]
 parameters$Dataset.Info = ds
 
 
+
 cat("\n########################################")
 cat("\n# Creating temporary processing folder #")
 cat("\n########################################\n\n")
@@ -169,10 +170,14 @@ diretorios <- directories(parameters)
 parameters$Directories = diretorios
 
 
+FolderLocal2 = paste0(parameters$Directories$FolderResults, "/Local2")
+if(dir.exists(FolderLocal2)==FALSE){dir.create(FolderLocal2)}
+parameters$Directories$FolderLocal2 = FolderLocal2
 
-cat("\n####################################################################")
-cat("\n# Checking the dataset tar.gz file                                 #")
-cat("\n####################################################################\n\n")
+
+cat("\n##################################################################")
+cat("\n# Checking the dataset tar.gz file                               #")
+cat("\n##################################################################\n\n")
 str00 = paste(parameters$Config.File$Dataset.Path, 
               "/", parameters$Config.File$Dataset.Name,
               ".tar.gz", sep = "")
@@ -255,25 +260,27 @@ if(implementation=="rf"){
   cat("\n\n########################################################")
     cat("\n# LOCAL: COMPRESS RESULTS                              #")
     cat("\n########################################################\n\n")
-  # str3 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
-  #              parameters$Dataset.Info$Name, "-results-local.tar.gz ",
-  #              parameters$Directories$FolderLocal, sep="")
-  # print(system(str3))
+    tar_file <- paste0(parameters$Directories$FolderResults, "/", 
+                       parameters$Dataset.Info$Name,
+                       "-results-local.tar.gz")
+    
+    # Comando tar incluindo duas pastas
+    str_01 <- paste(
+      "tar -zcvf", tar_file,
+      "-C", parameters$Directories$FolderResults, "."
+    )
+    
+    cat("\nComando:\n", str_01, "\n")
+    system(str_01)
   
-  str_01 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
-                 parameters$Dataset.Info$Name, "-results-local.tar.gz -C ",
-                 parameters$Directories$FolderLocal, " .", sep="")
-  print(system(str_01))
-  
-  
+    
   cat("\n\n###########################################################")
     cat("\n# ====> Local: COPY TO HOME                               #")
     cat("\n###########################################################\n\n")
-  
   str_02 = parameters$Directories$folderReports
   if(dir.exists(str_02)==FALSE){dir.create(str_02)}
   
-  str_03 = paste(parameters$Directories$FolderLocal, "/",
+  str_03 = paste(parameters$Directories$FolderResults, "/",
                  dataset_name, "-results-local.tar.gz", sep="")
   
   str_04 = paste("cp ", str_03, " ", str_02, sep="")

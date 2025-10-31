@@ -29,7 +29,7 @@ if __name__ == '__main__':
     test = pd.read_csv(sys.argv[3])
     start = int(sys.argv[4])
     end = int(sys.argv[5])
-    diretorio = sys.argv[6]
+    directory = sys.argv[6]
 
     """
     train = pd.read_csv("/tmp/lr-GpositiveGO/Dataset/GpositiveGO/CrossValidation/Tr/GpositiveGO-Split-Tr-1.csv")
@@ -37,7 +37,7 @@ if __name__ == '__main__':
     test = pd.read_csv("/tmp/lr-GpositiveGO/Dataset/GpositiveGO/CrossValidation/Ts/GpositiveGO-Split-Ts-1.csv")
     start = 912
     end = 916
-    diretorio = "/tmp/lr-GpositiveGO/Local/Split-1"
+    directory = "/tmp/lr-GpositiveGO/Local/Split-1"
     """
 
     # junta treino e validação
@@ -122,10 +122,10 @@ if __name__ == '__main__':
 
 
     # ======= SALVANDO OS CSVS =======        
-    true = os.path.join(diretorio, "y_true.csv")
-    binary = os.path.join(diretorio, "y_pred_bin.csv")
-    proba = os.path.join(diretorio, "y_pred_proba.csv")
-    original = os.path.join(diretorio, "y_proba_original.csv")
+    true = os.path.join(directory, "y_true.csv")
+    binary = os.path.join(directory, "y_pred_bin.csv")
+    proba = os.path.join(directory, "y_pred_proba.csv")
+    original = os.path.join(directory, "y_proba_original.csv")
 
     test[labels_y_test].to_csv(true, index=False)
     
@@ -140,19 +140,28 @@ if __name__ == '__main__':
         testing_time_bin,
         testing_time_proba
     ]], columns=["training", "testing_bin", "testing_proba"])
-    df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
+    df_timing.to_csv(os.path.join(directory, "runtime-python.csv"), index=False)
+
+
 
     # ======= SAVE MEASURES =======    
-    metrics_df = eval.multilabel_curves_measures(Y_test, pd.DataFrame(probabilities, columns=labels_y_test))
-    metrics_df.to_csv(os.path.join(diretorio, "results-python.csv"), index=False)
+    # metrics_df = eval.multilabel_curves_measures(Y_test, pd.DataFrame(probabilities, columns=labels_y_test))
+    # metrics_df.to_csv(os.path.join(directory, "results-python.csv"), index=False)
 
     #bipartition_df = eval.multilabel_bipartition_measures(Y_test, pd.DataFrame(probabilities, columns=labels_y_test))
-    #bipartition_df.to_csv(os.path.join(diretorio, "bipartition-python.csv"), index=False)
+    #bipartition_df.to_csv(os.path.join(directory, "bipartition-python.csv"), index=False)
+
+    metrics_df, ignored_df = eval.multilabel_curve_metrics(Y_test, probabilities_df)        
+    name = (directory + "/results-python.csv") 
+    metrics_df.to_csv(name, index=False)      
+    name = (directory + "/ignored-classes.csv") 
+    ignored_df.to_csv(name, index=False)  
+
 
     # ======= SAVE MODEL SIZE =======
     model_buffer = io.BytesIO()
     pickle.dump(classifier, model_buffer)
     model_size_bytes = model_buffer.tell()
     pd.DataFrame({'size': [model_size_bytes]}).to_csv(
-        os.path.join(diretorio, "model-size.csv"), index=False
+        os.path.join(directory, "model-size.csv"), index=False
     )

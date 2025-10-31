@@ -363,9 +363,12 @@ if(implementation=="rf"){
   str_01 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
                  parameters$Dataset.Info$Name, "-results-local.tar.gz -C ",
                  parameters$Directories$FolderLocal, " .", sep="")
-  print(system(str_01)) 
-
-  
+  res = system(str_01)
+  if(res!=0){
+    system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
+    print(res)
+    stop("\n\n Something went wrong in compressing results files \n\n")
+  }
   
   cat("\n\n###################################################################")
   cat("\n# ====> GPC: COPY TO HOME                                     #")
@@ -378,7 +381,12 @@ if(implementation=="rf"){
                  "-results-local.tar.gz", sep="")
   
   str_04 = paste("cp ", str_03, " ", str_0, sep="")
-  system(str_04)
+  res = system(str_04)
+  if(res!=0){
+    system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
+    print(res)
+    stop("\n\n Something went wrong in compressing results files \n\n")
+  }
   
   
 } else if(implementation=="mulan"){

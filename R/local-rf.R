@@ -290,21 +290,21 @@ evaluate.local.python <- function(parameters, folder){
                 Folder = FolderSplit, 
                 nome = paste(FolderSplit, "/results-r.csv", sep=""))
     
-    ###########################################################################
-    # names files
-    nome.tr.csv = paste(FolderSplit, "/", 
-                        parameters$Config.File$Dataset.Name , 
-                        "-Split-Tr-", f, ".csv", sep="")
-    nome.ts.csv = paste(FolderSplit, "/", 
-                        parameters$Config.File$Dataset.Name, 
-                        "-Split-Ts-", f, ".csv", sep="")
-    nome.vl.csv = paste(FolderSplit, "/", 
-                        parameters$Config.File$Dataset.Name, 
-                        "-Split-Vl-", f, ".csv", sep="")
-    
-    system(paste0("rm -r ", nome.tr.csv))
-    system(paste0("rm -r ", nome.ts.csv))
-    system(paste0("rm -r ", nome.vl.csv))
+    # ###########################################################################
+    # # names files
+    # nome.tr.csv = paste(FolderSplit, "/", 
+    #                     parameters$Config.File$Dataset.Name , 
+    #                     "-Split-Tr-", f, ".csv", sep="")
+    # nome.ts.csv = paste(FolderSplit, "/", 
+    #                     parameters$Config.File$Dataset.Name, 
+    #                     "-Split-Ts-", f, ".csv", sep="")
+    # nome.vl.csv = paste(FolderSplit, "/", 
+    #                     parameters$Config.File$Dataset.Name, 
+    #                     "-Split-Vl-", f, ".csv", sep="")
+    # 
+    # system(paste0("rm -r ", nome.tr.csv))
+    # system(paste0("rm -r ", nome.ts.csv))
+    # system(paste0("rm -r ", nome.vl.csv))
     
     # f = f + 1
     gc()

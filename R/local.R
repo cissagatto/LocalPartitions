@@ -360,26 +360,11 @@ if(implementation=="rf"){
   cat("\n\n###################################################################")
   cat("\n# LOCAL: COMPRESS RESULTS                                      #")
   cat("\n#####################################################################\n\n")
-  # str3 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
-  #              parameters$Dataset.Info$Name, "-results-local.tar.gz ",
-  #              parameters$Directories$FolderLocal, sep="")
-  # print(system(str3))
-  
   str_01 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
                  parameters$Dataset.Info$Name, "-results-local.tar.gz -C ",
                  parameters$Directories$FolderLocal, " .", sep="")
-  print(system(str_01))
-  
-  tar_file <- paste0(parameters$Directories$FolderResults, "/", 
-                     parameters$Dataset.Info$Name,
-                     "-results-local.tar.gz")
-  
-  str_01 <- paste(
-    "tar -zcvf", tar_file,
-    "-C", parameters$Directories$FolderLocal, "."
-  )
-  cat("\nComando:\n", str_01, "\n")
-  system(str_01)
+  print(system(str_01)) 
+
   
   
   cat("\n\n###################################################################")

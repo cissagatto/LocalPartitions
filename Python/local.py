@@ -127,21 +127,21 @@ if __name__ == '__main__':
     start_train_time = time.time()
     classifier.fit(X_train.values, Y_train.values)
     end_train_time = time.time()
-    training_time = end_train_time - start_train_time
+    training = end_train_time - start_train_time
     
     
     # ======= PREDIÇÃO BINÁRIA =======
     start_test_time = time.time()
     binary_predictions = classifier.predict(X_test.values)    
     end_test_time = time.time()
-    testing_time_bin = end_test_time - start_test_time
+    testing_bin = end_test_time - start_test_time
 
 
     # ======= PREDIÇÃO DE PROBABILIDADES =======
     start_test_time = time.time()    
     probas_list = classifier.predict_proba(X_test.values)
     end_test_time = time.time()
-    testing_time_proba = end_test_time - start_test_time
+    testing_proba = end_test_time - start_test_time
 
     
     # ======= PEGANDO APENAS A PROBABILIDADE DE PERTENCER =======            
@@ -162,9 +162,9 @@ if __name__ == '__main__':
 
     # ======= SAVE TIME =======    
     df_timing = pd.DataFrame([[        
-        training_time,
-        testing_time_bin,
-        testing_time_proba
+        training,
+        testing_bin,
+        testing_proba
     ]], columns=["training", "testing_bin", "testing_proba"])
     df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
 

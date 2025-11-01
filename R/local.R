@@ -337,8 +337,8 @@ if(implementation=="rf"){
   
   
   cat("\n\n####################################################")
-  cat("\n# RSCRIPT DELETE                                   #")
-  cat("\n####################################################\n\n")
+    cat("\n# RSCRIPT DELETE                                   #")
+    cat("\n####################################################\n\n")
   str5 = paste("rm -r ", parameters$Directories$FolderDataset, sep="")
   system(str5)
   
@@ -357,31 +357,36 @@ if(implementation=="rf"){
   #   quit("yes")
   # }
   
-  cat("\n\n###################################################################")
-  cat("\n# LOCAL: COMPRESS RESULTS                                      #")
-  cat("\n#####################################################################\n\n")
-  str_01 = paste("tar -zcvf ", parameters$Directories$FolderLocal, "/",
-                 parameters$Dataset.Info$Name, "-results-local.tar.gz -C ",
-                 parameters$Directories$FolderLocal, " .", sep="")
-  res = system(str_01)
-  if(res!=0){
+  cat("\n\n###############################################################")
+    cat("\n# LOCAL: COMPRESS RESULTS                                     #")
+    cat("\n###############################################################\n\n")
+  folder_results <- parameters$Directories$FolderResults
+  output_tar <- paste0(folder_results, "/", parameters$Dataset.Info$Name, 
+    "-results-local.tar.gz")
+  
+  str_01 <- paste0("tar -zcvf ", output_tar, " -C ", folder_results, " Local Local2")
+  res <- system(str_01)
+  
+  if(res != 0){
     system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
     print(res)
     stop("\n\n Something went wrong in compressing results files \n\n")
   }
   
-  cat("\n\n###################################################################")
-  cat("\n# ====> GPC: COPY TO HOME                                     #")
-  cat("\n#####################################################################\n\n")
-  str_0 = parameters$Directories$folderReports
-  if(dir.exists(str_0)==FALSE){dir.create(str0)}
-  
-  str_03 = paste(parameters$Directories$FolderResults, "/",
-                 parameters$Dataset.Info$Name,
-                 "-results-local.tar.gz", sep="")
-  
-  str_04 = paste("cp ", str_03, " ", str_0, sep="")
-  res = system(str_04)
+
+
+  cat("\n\n##########################################################")
+    cat("\n# LOCAL COPY TO HOME                                     #")
+    cat("\n##########################################################\n\n")
+  str0 = paste0(FolderRoot, "/Reports")
+      if(dir.exists(str0)==FALSE){dir.create(str0)}
+      
+  str4 <- paste0(parameters$Directories$FolderResults, "/",
+  parameters$Dataset.Info$Name, "-results-local.tar.gz")
+      
+  str5 = paste("cp ", str4, " ", str0, sep="")
+  res = system(str5)
+      
   if(res!=0){
     system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
     print(res)

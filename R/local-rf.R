@@ -114,31 +114,31 @@ execute.local.python <- function(parameters){
     
     res = system(str.execute)
     if(res!=0){
-      system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
-      stop("\n\n Something went wrong in python\n\n")
+      #system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
+      message("\n\n Something went wrong in python\n\n")
     } else {
       message("\n\n PYTHON RAN OK! \n\n")
     }
     
     
-    ##################################################################
-    str.execute = paste("python3 ", parameters$Directories$folderPython,
-                        "/local3.py ", 
-                        nome.tr.csv, " ",
-                        nome.vl.csv,  " ",
-                        nome.ts.csv, " ", 
-                        start = as.numeric(parameters$Dataset.Info$AttEnd), " ",
-                        end = as.numeric(parameters$Dataset.Info$LabelEnd), " ", 
-                        FolderSplit2 ,
-                        sep="")
-    
-    res = system(str.execute)
-    if(res!=0){
-      system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
-      stop("\n\n Something went wrong in python\n\n")
-    } else {
-      message("\n\n PYTHON RAN OK! \n\n")
-    }
+    # ##################################################################
+    # str.execute = paste("python3 ", parameters$Directories$folderPython,
+    #                     "/local3.py ", 
+    #                     nome.tr.csv, " ",
+    #                     nome.vl.csv,  " ",
+    #                     nome.ts.csv, " ", 
+    #                     start = as.numeric(parameters$Dataset.Info$AttEnd), " ",
+    #                     end = as.numeric(parameters$Dataset.Info$LabelEnd), " ", 
+    #                     FolderSplit2 ,
+    #                     sep="")
+    # 
+    # res = system(str.execute)
+    # if(res!=0){
+    #   system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
+    #   stop("\n\n Something went wrong in python\n\n")
+    # } else {
+    #   message("\n\n PYTHON RAN OK! \n\n")
+    # }
     
     #tempo = data.matrix((proc.time() - start))
     #tempo = data.frame(t(tempo))
@@ -290,21 +290,26 @@ evaluate.local.python <- function(parameters, folder){
                 Folder = FolderSplit, 
                 nome = paste(FolderSplit, "/results-r.csv", sep=""))
     
-    # ###########################################################################
-    # # names files
-    # nome.tr.csv = paste(FolderSplit, "/", 
-    #                     parameters$Config.File$Dataset.Name , 
-    #                     "-Split-Tr-", f, ".csv", sep="")
-    # nome.ts.csv = paste(FolderSplit, "/", 
-    #                     parameters$Config.File$Dataset.Name, 
-    #                     "-Split-Ts-", f, ".csv", sep="")
-    # nome.vl.csv = paste(FolderSplit, "/", 
-    #                     parameters$Config.File$Dataset.Name, 
-    #                     "-Split-Vl-", f, ".csv", sep="")
-    # 
-    # system(paste0("rm -r ", nome.tr.csv))
-    # system(paste0("rm -r ", nome.ts.csv))
-    # system(paste0("rm -r ", nome.vl.csv))
+    #########################################################################
+    name.true = paste0(FolderSplit, "/y_true.csv")
+    name.proba = paste0(FolderSplit, "/y_pred_proba.csv")
+    
+    str.execute = paste("python3 ", parameters$Directories$folderPython,
+                        "/curves.py ", 
+                        name.true, " ", 
+                        name.proba, " ", 
+                        FolderSplit, " ", 
+                        sep = "")
+    res = system(str.execute)
+    
+    if(res!=0){
+      #system(paste("rm -r ", parameters$Directories$FolderResults, sep=""))
+      #stop("\n\n Something went wrong in python\n\n")
+      message("\n\n Something went wrong in python \n\n")
+    } else {
+      message("\n\n PYTHON RAN OK! \n\n")
+    }
+    
     
     # f = f + 1
     gc()

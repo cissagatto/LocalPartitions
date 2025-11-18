@@ -92,11 +92,11 @@ if __name__ == '__main__':
 
     
     print("\n\n%==============================================%")
-    print("train: ", sys.argv[1])
-    print("valid: ", sys.argv[2])
-    print("test: ", sys.argv[3])
-    print("start: ", sys.argv[4])
-    print("end: ", sys.argv[5])
+    #print("train: ", sys.argv[1])
+    #print("valid: ", sys.argv[2])
+    #print("test: ", sys.argv[3])
+    #print("start: ", sys.argv[4])
+    #print("end: ", sys.argv[5])
     print("directory: ", sys.argv[6])
     print("%==============================================%\n\n")
         
@@ -167,11 +167,6 @@ if __name__ == '__main__':
         testing_proba
     ]], columns=["training", "testing_bin", "testing_proba"])
     df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
-
-
-    # ======= SAVE MEASURES =======    
-    metrics_df = eval.multilabel_curves_measures(Y_test, pd.DataFrame(probas_df, columns=labels_y_test))
-    metrics_df.to_csv(os.path.join(diretorio, "results-python.csv"), index=False)
 
     
     # ======= SAVE MODEL SIZE =======

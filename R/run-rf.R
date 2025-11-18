@@ -48,6 +48,7 @@ run.rf <- function(parameters){
   
   source(file.path(parameters$Config.File$FolderScripts, "local-rf.R"))
   
+  
   if(parameters$Config.File$Number.Cores == 0){
     
     cat("\n\n##########################################################")
@@ -105,34 +106,20 @@ run.rf <- function(parameters){
   time.execute = system.time(execute.local.python(parameters))
   
   
-  cat("\n\n#######################################################")
-    cat("\n# RUN: Evaluate 1                                     #")
-    cat("\n#######################################################\n\n")
-  time.evaluate = system.time(evaluate.local.python(parameters,
-                                                    folder = parameters$Directories$FolderLocal))
-  
-  
-  cat("\n\n######################################################")
-    cat("\n# RUN: Evaluate 2                                    #")
-    cat("\n######################################################\n\n")
-  time.evaluate = system.time(evaluate.local.python(parameters,
-                                                    folder = parameters$Directories$FolderLocal2))
-  
-  
-  cat("\n\n##########################################################")
-    cat("\n# RUN: Gather Evaluated Measures 1                       #")
-    cat("\n##########################################################\n\n")
-  time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
-                                                              folder = parameters$Directories$FolderLocal))
-  
-  
-  cat("\n\n#########################################################")
-    cat("\n# RUN: Gather Evaluated Measures 2                      #")
-    cat("\n#########################################################\n\n")
-  time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
-                                                              folder = parameters$Directories$FolderLocal2))
-  
-  
+  # cat("\n\n######################################################")
+  #   cat("\n# RUN: Evaluate                                      #")
+  #   cat("\n######################################################\n\n")
+  # time.evaluate = system.time(evaluate.local.python(parameters,
+  #                                                   folder = parameters$Directories$FolderLocal))
+  # 
+  # 
+  # cat("\n\n#########################################################")
+  #   cat("\n# RUN: Gather Evaluated Measures                        #")
+  #   cat("\n#########################################################\n\n")
+  # time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
+  #                                                             folder = parameters$Directories$FolderLocal))
+  # 
+  # 
   # cat("\n\n###########################################################")
   #   cat("\n# RUN: Save Runtime                                       #")
   #   cat("\n###########################################################\n\n")

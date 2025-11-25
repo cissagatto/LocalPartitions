@@ -106,24 +106,24 @@ run.rf <- function(parameters){
   time.execute = system.time(execute.local.python(parameters))
   
   
-  # cat("\n\n######################################################")
-  #   cat("\n# RUN: Evaluate                                      #")
-  #   cat("\n######################################################\n\n")
-  # time.evaluate = system.time(evaluate.local.python(parameters,
-  #                                                   folder = parameters$Directories$FolderLocal))
-  # 
-  # 
-  # cat("\n\n#########################################################")
-  #   cat("\n# RUN: Gather Evaluated Measures                        #")
-  #   cat("\n#########################################################\n\n")
-  # time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
-  #                                                             folder = parameters$Directories$FolderLocal))
-  # 
-  # 
+  cat("\n\n######################################################")
+    cat("\n# RUN: Evaluate                                      #")
+    cat("\n######################################################\n\n")
+  time.evaluate = system.time(evaluate.local.python(parameters,
+                                                    folder = parameters$Directories$FolderLocal))
+
+
+  cat("\n\n#########################################################")
+    cat("\n# RUN: Gather Evaluated Measures                        #")
+    cat("\n#########################################################\n\n")
+  time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
+                                                              folder = parameters$Directories$FolderLocal))
+
+
   # cat("\n\n###########################################################")
   #   cat("\n# RUN: Save Runtime                                       #")
   #   cat("\n###########################################################\n\n")
-  # RunTimeGlobal = rbind(time.execute, time.evaluate, 
+  # RunTimeGlobal = rbind(time.execute, time.evaluate,
   #                       time.gather.evaluate)
   # setwd(parameters$Directories$FolderLocal)
   # write.csv(RunTimeGlobal, "runtime-functions.csv")

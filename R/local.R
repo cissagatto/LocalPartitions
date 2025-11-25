@@ -88,7 +88,7 @@ args <- commandArgs(TRUE)
 config_file <- args[1]
 
 
-# config_file = "~/LocalPartitions/config-files/lr-GnegativeGO-1.csv"
+# config_file = "~/LocalPartitions/config-files/lr-yeast-1.csv"
 
 
 parameters$Config.File$Name = config_file

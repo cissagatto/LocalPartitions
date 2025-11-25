@@ -60,6 +60,7 @@ from sklearn.utils.multiclass import type_of_target
 
 import warnings
 from sklearn.exceptions import UndefinedMetricWarning
+from sklearn.metrics import average_precision_score
 
 from ml_auprc_roc import *
 import ml_auprc_roc as ml
@@ -99,6 +100,7 @@ if __name__ == '__main__':
     #print("\nSECOND COMPUTATION!")
     #metrics_df = eval.multilabel_curves_measures(true, pd.DataFrame(proba, columns=true.columns))
     #metrics_df.to_csv(os.path.join(directory, "results-python.csv"), index=False)           
+    
 
     # =========== SAVE MEASURES ===========   
     fpr_macro, tpr_macro, macro_auc, macro_auc_interp, macro_df = ml.robust_macro_roc_auc(true, proba, verbose=False)
@@ -106,10 +108,10 @@ if __name__ == '__main__':
     fpr_w, tpr_w, auc_weighted, auc_df = ml.robust_weighted_roc_auc(true, proba, verbose=False)
     sample_auc_df, samples_auc_mean = ml.robust_sample_roc_auc(true, proba, verbose=False)
     
-    average_precision_macro = average_precision_score(true, pred, average='macro')
-    average_precision_micro = average_precision_score(true, pred, average='micro')
-    average_precision_weighted = average_precision_score(true, pred, average='weighted')
-    average_precision_samples = average_precision_score(true, pred, average='samples')    
+    average_precision_macro = average_precision_score(true, proba, average='macro')
+    average_precision_micro = average_precision_score(true, proba, average='micro')
+    average_precision_weighted = average_precision_score(true, proba, average='weighted')
+    average_precision_samples = average_precision_score(true, proba, average='samples')    
 
     result_df = pd.DataFrame({
         "Measures": ["macro_auc", "macro_auc_interp", "micro_auc", "weighted_auc", "samples_auc","auprc_macro","auprc_micro","auprc_weighted","auprc_samples"],
@@ -129,12 +131,3 @@ if __name__ == '__main__':
 
     roc_curves_df.to_pickle(os.path.join(directory, "roc-points.pkl"))
     # df = pd.read_pickle("ROC_curves.pkl")
-    
-    
-    
-
-
-
-
-   
- 

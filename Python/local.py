@@ -63,11 +63,11 @@ import numpy as np
 from skmultilearn.problem_transform import BinaryRelevance
 from sklearn.ensemble import RandomForestClassifier  
 
-import evaluation as eval
-importlib.reload(eval)
+#import evaluation as eval
+#importlib.reload(eval)
 
-import measures as ms
-importlib.reload(ms)
+#import measures as ms
+#importlib.reload(ms)
 
 if __name__ == '__main__':
 

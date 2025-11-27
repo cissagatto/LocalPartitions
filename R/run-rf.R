@@ -105,19 +105,19 @@ run.rf <- function(parameters){
     cat("\n####################################################\n\n")
   time.execute = system.time(execute.local.python(parameters))
   
-  
-  cat("\n\n######################################################")
-    cat("\n# RUN: Evaluate                                      #")
-    cat("\n######################################################\n\n")
-  time.evaluate = system.time(evaluate.local.python(parameters,
-                                                    folder = parameters$Directories$FolderLocal))
-
-
-  cat("\n\n#########################################################")
-    cat("\n# RUN: Gather Evaluated Measures                        #")
-    cat("\n#########################################################\n\n")
-  time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
-                                                              folder = parameters$Directories$FolderLocal))
+  # 
+  # cat("\n\n######################################################")
+  #   cat("\n# RUN: Evaluate                                      #")
+  #   cat("\n######################################################\n\n")
+  # time.evaluate = system.time(evaluate.local.python(parameters,
+  #                                                   folder = parameters$Directories$FolderLocal))
+  # 
+  # 
+  # cat("\n\n#########################################################")
+  #   cat("\n# RUN: Gather Evaluated Measures                        #")
+  #   cat("\n#########################################################\n\n")
+  # time.gather.evaluate = system.time(gather.eval.python.silho(parameters,
+  #                                                             folder = parameters$Directories$FolderLocal))
 
 
   # cat("\n\n###########################################################")

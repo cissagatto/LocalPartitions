@@ -46,6 +46,7 @@ import os
 import io
 
 import joblib
+import traceback
 
 #FolderRoot = os.path.expanduser('~/LocalPartitions/Python')
 #os.chdir(FolderRoot)
@@ -124,56 +125,78 @@ if __name__ == '__main__':
 
 
     # ======= TREINO =======
+    #print("\n fit")
+    #start_train_time = time.time()
+    #classifier.fit(X_train.values, Y_train.values)
+    #end_train_time = time.time()
+    #training = end_train_time - start_train_time
+    
+    # ======= TREINO =======
+    print("\n fit")
     start_train_time = time.time()
-    classifier.fit(X_train.values, Y_train.values)
-    end_train_time = time.time()
-    training = end_train_time - start_train_time
-    
-    
-    # ======= PREDIÇÃO BINÁRIA =======
-    start_test_time = time.time()
-    binary_predictions = classifier.predict(X_test.values)    
-    end_test_time = time.time()
-    testing_bin = end_test_time - start_test_time
+
+    try:
+        classifier.fit(X_train.values, Y_train.values)
+        end_train_time = time.time()
+        training = end_train_time - start_train_time
+        
+        # ======= PREDIÇÃO BINÁRIA =======
+        print("\n predict bin")
+        start_test_time = time.time()
+        binary_predictions = classifier.predict(X_test.values)    
+        end_test_time = time.time()
+        testing_bin = end_test_time - start_test_time
 
 
-    # ======= PREDIÇÃO DE PROBABILIDADES =======
-    start_test_time = time.time()    
-    probas_list = classifier.predict_proba(X_test.values)
-    end_test_time = time.time()
-    testing_proba = end_test_time - start_test_time
-
-    
-    # ======= PEGANDO APENAS A PROBABILIDADE DE PERTENCER =======            
-    probas_dense = probas_list.toarray()
-    probas_df = pd.DataFrame(probas_dense, columns=Y_test.columns)
-    binary_predictions_2 = binary_predictions.toarray()
-    binary_df = pd.DataFrame(binary_predictions_2, columns=Y_test.columns)
+        # ======= PREDIÇÃO DE PROBABILIDADES =======
+        print("\n predict proba")
+        start_test_time = time.time()    
+        probas_list = classifier.predict_proba(X_test.values)
+        end_test_time = time.time()
+        testing_proba = end_test_time - start_test_time
 
     
-    # ======= SALVANDO OS CSVS =======        
-    true = os.path.join(diretorio, "y_true.csv")
-    binary = os.path.join(diretorio, "y_pred_bin.csv")
-    proba = os.path.join(diretorio, "y_pred_proba.csv")   
-    test[labels_y_test].to_csv(true, index=False)    
-    probas_df.to_csv(proba, index=False)
-    binary_df.to_csv(binary, index=False)
-    
-
-    # ======= SAVE TIME =======    
-    df_timing = pd.DataFrame([[        
-        training,
-        testing_bin,
-        testing_proba
-    ]], columns=["training", "testing_bin", "testing_proba"])
-    df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
+        # ======= PEGANDO APENAS A PROBABILIDADE DE PERTENCER =======            
+        probas_dense = probas_list.toarray()
+        probas_df = pd.DataFrame(probas_dense, columns=Y_test.columns)
+        binary_predictions_2 = binary_predictions.toarray()
+        binary_df = pd.DataFrame(binary_predictions_2, columns=Y_test.columns)
 
     
-    # ======= SAVE MODEL SIZE =======
-    model_buffer = io.BytesIO()
-    pickle.dump(classifier, model_buffer)
-    model_size_bytes = model_buffer.tell()
-    pd.DataFrame({'size': [model_size_bytes]}).to_csv(
-        os.path.join(diretorio, "model-size.csv"), index=False
-    )
+        # ======= SALVANDO OS CSVS =======      
+        print("\n saving predictions")
+        true = os.path.join(diretorio, "y_true.csv")
+        binary = os.path.join(diretorio, "y_pred_bin.csv")
+        proba = os.path.join(diretorio, "y_pred_proba.csv")   
+        test[labels_y_test].to_csv(true, index=False)    
+        probas_df.to_csv(proba, index=False)
+        binary_df.to_csv(binary, index=False)
+    
 
+        # ======= SAVE TIME =======   
+        print("\n saving time")
+        df_timing = pd.DataFrame([[        
+            training,
+            testing_bin,
+            testing_proba
+        ]], columns=["training", "testing_bin", "testing_proba"])
+        df_timing.to_csv(os.path.join(diretorio, "runtime-python.csv"), index=False)
+
+    
+        # ======= SAVE MODEL SIZE =======
+        print("\n saving model  size")
+        model_buffer = io.BytesIO()
+        pickle.dump(classifier, model_buffer)
+        model_size_bytes = model_buffer.tell()
+        pd.DataFrame({'size': [model_size_bytes]}).to_csv(
+            os.path.join(diretorio, "model-size.csv"), index=False
+        )
+    
+    except Exception as e:
+        print("\n❌ ERRO DETECTADO:")
+        print("Tipo:", type(e).__name__)
+        print("Mensagem:", e)
+        print("\nStack trace completo:")
+        traceback.print_exc()
+        
+        

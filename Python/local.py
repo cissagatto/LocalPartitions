@@ -176,7 +176,7 @@ if __name__ == '__main__':
 
     
     # ======= SAVE MODEL SIZE =======
-    print("\n salva runtime")
+    print("\n salva model size")
     model_buffer = io.BytesIO()
     pickle.dump(classifier, model_buffer)
     model_size_bytes = model_buffer.tell()
